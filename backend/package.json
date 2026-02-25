@@ -1,0 +1,15 @@
+{
+  "name": "zone1-crime-intelligence",
+  "version": "1.0.0",
+  "description": "Zone 1 Crime Intelligence System — Aurangabad City Police",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "chokidar": "^3.5.3",
+    "express": "^4.18.2",
+    "xlsx": "^0.18.5"
+  }
+}

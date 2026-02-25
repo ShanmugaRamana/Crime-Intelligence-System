@@ -1,0 +1,37 @@
+﻿Rows: 37, Columns: 6
+
+=== COLUMNS ===
+  1. Year | Type: int64 | Non-null: 37/37 | Unique: 1
+  2. Month | Type: int64 | Non-null: 37/37 | Unique: 6
+  3. Police Station | Type: object | Non-null: 37/37 | Unique: 8
+  4. Crime Type | Type: object | Non-null: 37/37 | Unique: 33
+  5. Under Investigation | Type: int64 | Non-null: 37/37 | Unique: 3
+  6. Closed | Type: int64 | Non-null: 37/37 | Unique: 9
+
+=== ALL DATA ===
+py : Traceback (most recent call last):
+At line:1 char:1
++ py e:\Project\Maharastra\analyze_crime
+_data.py 2>&1 | Out-File -Encod ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif 
+   ied: (Traceback (most recent call l  
+  ast)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom 
+   mandError
+ 
+  File "e:\Project\Maharastra\analyze_cr
+ime_data.py", line 17, in <module>
+    print(df.to_string())
+    ~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Varun\AppData\Local\Pro
+grams\Python\Python313\Lib\encodings\cp1
+252.py", line 19, in encode
+    return codecs.charmap_encode(input,s
+elf.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec 
+can't encode characters in position 
+148-150: character maps to <undefined>
