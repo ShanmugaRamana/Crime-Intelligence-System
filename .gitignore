@@ -3,3 +3,7 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+analysis_output.txt
+logo.png
+Sample 1.png
+Sample 2.png
