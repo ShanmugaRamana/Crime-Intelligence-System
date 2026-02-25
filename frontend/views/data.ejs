@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data - <%= title %>
+    </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/home.css">
+</head>
+
+<body>
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <img src="/img/logo.png" alt="CIS Logo" class="top-bar-logo" onerror="this.style.display='none'">
+            <span class="top-bar-title">Crime Intelligence System</span>
+            <span class="zone-chip">Zone 1</span>
+
+            <nav class="top-bar-nav">
+                <a href="/home" class="nav-link">Dashboard</a>
+                <a href="/data" class="nav-link active">Data</a>
+            </nav>
+        </div>
+
+        <div class="top-bar-right">
+            <span class="welcome-user">Hello, <strong>
+                    <%= username %>
+                </strong></span>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <main class="dashboard-content full-width">
+        <h1>Data Repository</h1>
+        <p class="placeholder-text">This is the secure data repository. Tables and datasets will be displayed here.</p>
+
+        <div class="data-import-section">
+            <!-- Left Column: Import -->
+            <div class="import-column">
+                <div class="upload-box">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h3>Upload Dataset</h3>
+                    <p>Drag and drop your .csv or .xlsx file here, or click to browse.</p>
+                    <input type="file" id="file-upload" class="file-input"
+                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                    <label for="file-upload" class="upload-btn">Browse Files</label>
+                </div>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="integration-box">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="8" y1="13" x2="16" y2="13"></line>
+                        <line x1="8" y1="17" x2="16" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <div class="integration-info">
+                        <h3>Connect Google Sheets</h3>
+                        <p>Sync your live data directly from Google Workspace</p>
+                    </div>
+                    <button class="connect-btn">Connect</button>
+                </div>
+            </div>
+
+            <!-- Right Column: Current Data -->
+            <div class="modify-column">
+                <div class="modify-box">
+                    <div class="modify-header">
+                        <h3>Current Data</h3>
+                        <button class="modify-btn" disabled>Modify</button>
+                    </div>
+                    <p class="placeholder-text">Upload a dataset or connect a sheet to view data here.</p>
+
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                        <p>No Data Loaded</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Redirect to login if session has expired (handles browser back button)
+        fetch('/auth/check')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.replace('/');
+                }
+            });
+
+        // Shared function to display data on the page
+        function displayData(data, filename) {
+            const modifyBox = document.querySelector('.modify-box');
+            const importCol = document.querySelector('.import-column');
+
+            // Build table
+            let tableHtml = '<table class="data-table"><thead><tr>';
+            data.columns.forEach(col => {
+                tableHtml += `<th>${col}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+            data.data.forEach(row => {
+                tableHtml += '<tr>';
+                data.columns.forEach(col => {
+                    tableHtml += `<td>${row[col]}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+
+            // Update right-side panel
+            modifyBox.innerHTML = `
+                <div class="modify-header">
+                    <h3>Current Data</h3>
+                    <button class="modify-btn">Modify</button>
+                </div>
+                <p class="placeholder-text" style="margin-bottom: 12px;">
+                    <strong>${filename}</strong> — ${data.rows} rows
+                </p>
+                <div class="table-wrapper">${tableHtml}</div>
+            `;
+
+            // Update left-side to success state
+            importCol.innerHTML = `
+                <div class="upload-success">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3>Successfully Uploaded</h3>
+                    <p>${filename}</p>
+                    <button class="upload-btn" id="reupload-btn">Reupload Data</button>
+                </div>
+            `;
+
+            document.getElementById('reupload-btn').addEventListener('click', async () => {
+                await fetch('/data/current', { method: 'DELETE' });
+                window.location.reload();
+            });
+        }
+
+        // Load existing dataset on page load
+        fetch('/data/current')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    displayData(data, data.filename || 'Dataset');
+                }
+            })
+            .catch(() => { });
+
+        // File Upload Logic
+        const fileInput = document.getElementById('file-upload');
+        const uploadBox = document.querySelector('.upload-box');
+        const uploadBtn = document.querySelector('.upload-btn');
+        const modifyBox = document.querySelector('.modify-box');
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show loading state
+            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.style.opacity = '0.6';
+            uploadBtn.style.pointerEvents = 'none';
+
+            // Remove any previous status message
+            const oldStatus = uploadBox.querySelector('.upload-status');
+            if (oldStatus) oldStatus.remove();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/data/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                const statusEl = document.createElement('p');
+                statusEl.classList.add('upload-status');
+
+                if (response.ok && data.success) {
+                    displayData(data, file.name);
+                } else {
+                    statusEl.style.color = '#dc2626';
+                    statusEl.textContent = `✗ ${data.detail || data.message || 'Upload failed'}`;
+                    uploadBox.appendChild(statusEl);
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                const statusEl = document.createElement('p');
+                statusEl.classList.add('upload-status');
+                statusEl.style.color = '#dc2626';
+                statusEl.textContent = '✗ Unable to connect to server';
+                uploadBox.appendChild(statusEl);
+            } finally {
+                uploadBtn.textContent = 'Browse Files';
+                uploadBtn.style.opacity = '1';
+                uploadBtn.style.pointerEvents = 'auto';
+                fileInput.value = '';
+            }
+        });
+    </script>
+</body>
+
+</html>

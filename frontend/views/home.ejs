@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - <%= title %>
+    </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/home.css">
+</head>
+
+<body>
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <img src="/img/logo.png" alt="CIS Logo" class="top-bar-logo" onerror="this.style.display='none'">
+            <span class="top-bar-title">Crime Intelligence System</span>
+            <span class="zone-chip">Zone 1</span>
+
+            <nav class="top-bar-nav">
+                <a href="/home" class="nav-link active">Dashboard</a>
+                <a href="/data" class="nav-link">Data</a>
+            </nav>
+        </div>
+
+        <div class="top-bar-right">
+            <span class="welcome-user">Hello, <strong>
+                    <%= username %>
+                </strong></span>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
+    </header>
+
+    <main class="dashboard-content full-width custom-dashboard">
+        <!-- Top Filter Bar -->
+        <div class="top-filter-bar">
+            <div class="filter-group">
+                <label>Year</label>
+                <select id="filter-year">
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Month</label>
+                <select id="filter-month">
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Crime Type</label>
+                <select id="filter-type">
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div class="filter-pills">
+                <button class="pill active" data-acp="city">ACP City</button>
+                <button class="pill" data-acp="chavni">ACP Chavni</button>
+            </div>
+            <div class="filter-actions">
+                <button id="reset-filters" class="reset-btn">Reset Filters</button>
+            </div>
+        </div>
+
+        <!-- Police Station Cards -->
+        <div class="station-section">
+            <h3 class="section-title">Select a Police Station</h3>
+            <div class="station-cards-container" id="station-cards">
+                <!-- Dynamically populated via JS. Example:
+                <div class="station-card active">
+                    <div class="station-badge">1</div>
+                    <div class="station-name">City Chowk</div>
+                    <div class="station-count">3<br><span>cases</span></div>
+                </div>
+                -->
+            </div>
+        </div>
+
+        <!-- KPI Metrics -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon blue-bg">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Total Crimes</div>
+                    <div class="kpi-value" id="kpi-total">-</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon lightblue-bg">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Under Investigation</div>
+                    <div class="kpi-value" id="kpi-open">-</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon green-bg">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Closed Cases</div>
+                    <div class="kpi-value" id="kpi-closed">-</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon orange-bg">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-title">Closure Rate</div>
+                    <div class="kpi-value" id="kpi-rate">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="charts-row">
+            <div class="chart-card chart-wide">
+                <h3>Crime Types at Station</h3>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card chart-narrow">
+                <h3>Investigation vs Closed</h3>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="charts-row evenly">
+            <div class="chart-card chart-half">
+                <h3>Monthly Trend</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card chart-half">
+                <h3>Month-wise Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="stationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Redirect to login if session has expired
+        fetch('/auth/check')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.replace('/');
+                }
+            });
+
+        let dashboardData = [];
+        let filteredData = []; // filtered by top dropdowns
+        let selectedStation = 'all';
+        let charts = {};
+
+        // Chart defaults
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.scale.grid.color = '#f1f5f9';
+
+        async function initDashboard() {
+            try {
+                const res = await fetch('/data/current');
+                const result = await res.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    dashboardData = result.data;
+                    document.querySelector('.placeholder-text').textContent = '';
+
+                    populateTopFilters();
+                    setupEventListeners();
+                    applyTopFilters();
+                } else {
+                    document.querySelector('.placeholder-text').textContent = 'No data loaded. Please upload a dataset on the Data page to see analytics.';
+                }
+            } catch (err) {
+                console.error("Failed to load data", err);
+            }
+        }
+
+        function populateTopFilters() {
+            const years = new Set(), months = new Set(), types = new Set();
+            dashboardData.forEach(row => {
+                if (row['Year']) years.add(row['Year']);
+                if (row['Month']) months.add(row['Month']);
+                if (row['Crime Type']) types.add(row['Crime Type']);
+            });
+
+            const fillSelect = (id, set) => {
+                const select = document.getElementById(id);
+                Array.from(set).sort().forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    select.appendChild(opt);
+                });
+            };
+
+            fillSelect('filter-year', years);
+            fillSelect('filter-month', months);
+            fillSelect('filter-type', types);
+        }
+
+        function setupEventListeners() {
+            ['filter-year', 'filter-month', 'filter-type'].forEach(id => {
+                document.getElementById(id).addEventListener('change', applyTopFilters);
+            });
+
+            document.getElementById('reset-filters').addEventListener('click', () => {
+                document.getElementById('filter-year').value = 'all';
+                document.getElementById('filter-month').value = 'all';
+                document.getElementById('filter-type').value = 'all';
+                selectedStation = 'all';
+                document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+                document.querySelector('.pill').classList.add('active'); // default first
+                applyTopFilters();
+            });
+
+            document.querySelectorAll('.pill').forEach(pill => {
+                pill.addEventListener('click', (e) => {
+                    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+                    e.target.classList.add('active');
+                    // UI only for now unless dataset has ACP grouping
+                });
+            });
+        }
+
+        function applyTopFilters() {
+            const currentYear = document.getElementById('filter-year').value;
+            const currentMonth = document.getElementById('filter-month').value;
+            const currentType = document.getElementById('filter-type').value;
+
+            filteredData = dashboardData.filter(row => {
+                return (currentYear === 'all' || String(row['Year']) === currentYear) &&
+                    (currentMonth === 'all' || String(row['Month']) === currentMonth) &&
+                    (currentType === 'all' || row['Crime Type'] === currentType);
+            });
+
+            renderStationCards();
+            updateDashboard();
+        }
+
+        function renderStationCards() {
+            const stationMap = {};
+            filteredData.forEach(row => {
+                const station = row['Police Station'];
+                if (!station) return;
+                if (!stationMap[station]) stationMap[station] = 0;
+                stationMap[station]++;
+            });
+
+            const container = document.getElementById('station-cards');
+            container.innerHTML = '';
+
+            // Sorted stations
+            const sortedStations = Object.entries(stationMap).sort((a, b) => b[1] - a[1]);
+
+            // All card
+            const allCard = document.createElement('div');
+            allCard.className = `station-card ${selectedStation === 'all' ? 'active' : ''}`;
+            allCard.innerHTML = `<div class="station-name">All Stations</div><div class="station-count">${filteredData.length}<br><span>cases</span></div>`;
+            allCard.onclick = () => { selectedStation = 'all'; renderStationCards(); updateDashboard(); };
+            container.appendChild(allCard);
+
+            sortedStations.forEach(([station, count], index) => {
+                const card = document.createElement('div');
+                card.className = `station-card ${selectedStation === station ? 'active' : ''}`;
+                card.innerHTML = `<div class="station-badge">${index + 1}</div><div class="station-name">${station}</div><div class="station-count">${count}<br><span>cases</span></div>`;
+                card.onclick = () => { selectedStation = station; renderStationCards(); updateDashboard(); };
+                container.appendChild(card);
+            });
+        }
+
+        function updateDashboard() {
+            const chartData = selectedStation === 'all' ? filteredData : filteredData.filter(row => row['Police Station'] === selectedStation);
+
+            calculateKPIs(chartData);
+            renderTypeChart(chartData);
+            renderStatusChart(chartData);
+            renderTrendChart(chartData);
+            renderMonthBarChart(chartData);
+        }
+
+        function calculateKPIs(data) {
+            let totalUnderInv = 0;
+            let totalClosed = 0;
+
+            data.forEach(row => {
+                totalUnderInv += (parseInt(row['Under Investigation']) || 0);
+                totalClosed += (parseInt(row['Closed']) || 0);
+            });
+
+            const total = totalUnderInv + totalClosed;
+            const rate = total > 0 ? ((totalClosed / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('kpi-total').textContent = total.toLocaleString();
+            document.getElementById('kpi-open').textContent = totalUnderInv.toLocaleString();
+            document.getElementById('kpi-closed').textContent = totalClosed.toLocaleString();
+            document.getElementById('kpi-rate').textContent = `${rate}%`;
+        }
+
+        function destroyChart(id) {
+            if (charts[id]) charts[id].destroy();
+        }
+
+        function renderTypeChart(data) {
+            const typeMap = {};
+            data.forEach(row => {
+                const type = row['Crime Type'];
+                if (!type) return;
+                if (!typeMap[type]) typeMap[type] = 0;
+                typeMap[type]++;
+            });
+
+            const sortedTypes = Object.entries(typeMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            destroyChart('typeChart');
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            charts['typeChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedTypes.map(t => t[0]),
+                    datasets: [{
+                        data: sortedTypes.map(t => t[1]),
+                        backgroundColor: [
+                            '#6366f1', '#10b981', '#f59e0b', '#ef4444',
+                            '#0ea5e9', '#8b5cf6', '#ec4899', '#14b8a6',
+                            '#f97316', '#3b82f6', '#84cc16'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderStatusChart(data) {
+            let open = 0, closed = 0;
+            data.forEach(row => {
+                open += parseInt(row['Under Investigation']) || 0;
+                closed += parseInt(row['Closed']) || 0;
+            });
+
+            destroyChart('statusChart');
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            charts['statusChart'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Under Investigation', 'Closed Cases'],
+                    datasets: [{
+                        data: [open, closed],
+                        backgroundColor: ['#f59e0b', '#10b981'],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderTrendChart(data) {
+            const monthMap = {};
+            data.forEach(row => {
+                const m = row['Month'];
+                if (!m) return;
+                if (!monthMap[m]) monthMap[m] = 0;
+                monthMap[m]++;
+            });
+
+            const sortedMonths = Object.keys(monthMap).sort((a, b) => a - b);
+
+            destroyChart('trendChart');
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+            charts['trendChart'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedMonths.map(m => `Month ${m}`),
+                    datasets: [{
+                        label: 'Cases',
+                        data: sortedMonths.map(m => monthMap[m]),
+                        borderColor: '#6366f1',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#6366f1',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        function renderMonthBarChart(data) {
+            const monthMap = {};
+            data.forEach(row => {
+                const m = row['Month'];
+                if (!m) return;
+                if (!monthMap[m]) monthMap[m] = { open: 0, closed: 0 };
+                monthMap[m].open += parseInt(row['Under Investigation']) || 0;
+                monthMap[m].closed += parseInt(row['Closed']) || 0;
+            });
+
+            const sortedMonths = Object.keys(monthMap).sort((a, b) => a - b);
+
+            destroyChart('stationChart'); // Re-using canvas id for now
+            const ctx = document.getElementById('stationChart').getContext('2d');
+            charts['stationChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths.map(m => `Month ${m}`),
+                    datasets: [
+                        { label: 'Under Investigation', data: sortedMonths.map(m => monthMap[m].open), backgroundColor: '#fcd34d', borderRadius: 4 },
+                        { label: 'Closed Cases', data: sortedMonths.map(m => monthMap[m].closed), backgroundColor: '#6ee7b7', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Boot
+        initDashboard();
+    </script>
+</body>
+
+</html>

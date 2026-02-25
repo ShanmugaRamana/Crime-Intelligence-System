@@ -3,3 +3,4 @@ node_modules/
 venv
 data
 __pycache__
+package-lock.json

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - <%= title %>
+    </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <div class="login-wrapper">
+        <div class="logo-side">
+            <img src="/img/logo.png" alt="CIS Logo" id="main-logo"
+                onerror="this.src='https://via.placeholder.com/300x300?text=CIS+Logo'">
+            <div class="logo-text">Crime Intelligence System</div>
+        </div>
+
+        <div class="login-container">
+
+
+            <h1 id="t-welcome">Welcome</h1>
+            <p class="subtitle" id="t-subtitle">Enter your credentials to access the system</p>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username" id="t-username-label">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password" id="t-password-label">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="t-login-btn">Login to Dashboard</button>
+
+                <div class="lang-toggle-group" id="lang-switch">
+                    <input type="radio" id="lang-en-bottom" name="language" value="en" checked>
+                    <label for="lang-en-bottom" class="lang-toggle">English</label>
+                    <input type="radio" id="lang-mr-bottom" name="language" value="mr">
+                    <label for="lang-mr-bottom" class="lang-toggle">मराठी</label>
+                    <input type="radio" id="lang-hi-bottom" name="language" value="hi">
+                    <label for="lang-hi-bottom" class="lang-toggle">हिन्दी</label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/translations.js"></script>
+    <script src="/js/script.js"></script>
+</body>
+
+</html>
