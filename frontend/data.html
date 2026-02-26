@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Management — Zone 1 Crime Intelligence</title>
+    <meta name="description" content="Manage crime records — Aurangabad City Police">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <!-- Floating Top Nav -->
+    <nav class="top-nav">
+        <div class="nav-inner">
+            <a class="nav-brand" href="/">
+                <img src="/img/logo.png" alt="Logo">
+                <div class="nav-brand-text">
+                    <span class="nav-brand-title" data-t="appTitle">Zone 1 Crime Intelligence System</span>
+                    <span class="nav-brand-sub" data-t="appSubtitle">Aurangabad City Police</span>
+                </div>
+            </a>
+            <div class="nav-divider"></div>
+            <div class="nav-tabs">
+                <a href="/index.html" class="nav-tab" id="navOverall">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span data-t="navOverall">Overall Intelligence</span>
+                </a>
+                <a href="/station.html" class="nav-tab" id="navStation">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16" />
+                    </svg>
+                    <span data-t="navStation">Station-wise</span>
+                </a>
+                <a href="/data.html" class="nav-tab active" id="navData">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <span data-t="navData">Data</span>
+                </a>
+                <a href="/admin.html" class="nav-tab" id="navAdmin" style="display:none;">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    <span>Admin</span>
+                </a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-status">
+                    <span class="status-dot"></span>
+                    <span id="lastUpdated"></span>
+                </div>
+                <button class="btn-outline" id="langToggle">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                            d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2" />
+                    </svg>
+                    <span>मराठी</span>
+                </button>
+                <div class="nav-user-menu">
+                    <div class="user-info">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span id="userDisplay">—</span>
+                    </div>
+                    <button class="btn-outline btn-logout" id="btnLogout">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span data-t="logout">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="page-shell">
+
+        <!-- Connect Screen (shown when no data source linked) -->
+        <section class="connect-screen card" id="connectScreen">
+            <div class="connect-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+            </div>
+            <h2 class="connect-title">Connect Your Data Source</h2>
+            <p class="connect-desc">Paste the full path to your Excel file (.xlsx) to get started. The data will be
+                synced into the system.</p>
+            <div class="connect-input-row">
+                <input type="text" class="connect-path-input" id="connectPathInput"
+                    placeholder="e.g. E:\Data\Crime_Data.xlsx">
+                <button class="btn-primary connect-btn" id="btnConnect">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="5 12 10 17 20 7" />
+                    </svg>
+                    Connect
+                </button>
+            </div>
+            <p class="connect-hint">You can also drag & drop an Excel file or use Upload below.</p>
+            <label class="btn-outline connect-upload-btn" id="btnUploadConnect">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                Upload Excel File
+                <input type="file" id="fileInputConnect" accept=".xlsx,.xls" hidden>
+            </label>
+        </section>
+
+        <!-- Connected View (hidden until data source is linked) -->
+        <div id="connectedView" style="display:none">
+
+            <!-- Data Source Card -->
+            <section class="data-source-card card reveal-up">
+                <div class="data-source-header">
+                    <div class="data-source-info">
+                        <h2 class="data-source-title">
+                            <svg viewBox="0 0 24 24" class="data-icon">
+                                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+                            </svg>
+                            <span data-t="dataSource">Data Source</span>
+                        </h2>
+                        <p class="data-source-path" id="currentFilePath">Loading...</p>
+                    </div>
+                    <div class="data-source-stats">
+                        <div class="ds-stat">
+                            <span class="ds-stat-value" id="totalRecords">—</span>
+                            <span class="ds-stat-label" data-t="totalRecords">Records</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-source-actions">
+                    <label class="btn-primary" id="btnUpload">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                        </svg>
+                        <span data-t="uploadExcel">Upload Excel</span>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+                    </label>
+                    <button class="btn-outline" id="btnExport">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                        </svg>
+                        <span data-t="exportExcel">Export Excel</span>
+                    </button>
+                    <button class="btn-outline" id="btnReload">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="23 4 23 10 17 10" />
+                            <polyline points="1 20 1 14 7 14" />
+                            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                        </svg>
+                        <span data-t="reloadData">Reload</span>
+                    </button>
+                    <button class="btn-outline btn-disconnect" id="btnDisconnect">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                        <span>Disconnect</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Search & Filter Bar -->
+            <section class="data-toolbar card reveal-up">
+                <div class="data-search-wrap">
+                    <svg viewBox="0 0 24 24" class="search-icon">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" class="data-search" id="searchInput" placeholder="Search records..."
+                        data-t-placeholder="searchRecords">
+                </div>
+                <div class="data-filters">
+                    <select id="filterYear" class="data-filter">
+                        <option value="">All Years</option>
+                    </select>
+                    <select id="filterMonth" class="data-filter">
+                        <option value="">All Months</option>
+                    </select>
+                    <select id="filterStation" class="data-filter">
+                        <option value="">All Stations</option>
+                    </select>
+                    <select id="filterCrimeType" class="data-filter">
+                        <option value="">All Crime Types</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="btnAddRecord">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span data-t="addRecord">Add Record</span>
+                </button>
+            </section>
+
+            <!-- Data Table -->
+            <section class="data-table-wrap card reveal-up">
+                <div class="table-scroll">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th data-t="thYear">Year</th>
+                                <th data-t="thMonth">Month</th>
+                                <th data-t="thStation">Police Station</th>
+                                <th data-t="thCrimeType">Crime Type</th>
+                                <th data-t="thInvestigation">Under Investigation</th>
+                                <th data-t="thClosed">Closed</th>
+                                <th data-t="thActions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Empty State -->
+                <div class="data-empty" id="emptyState" style="display:none">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+                        <polyline points="13 2 13 9 20 9" />
+                    </svg>
+                    <p data-t="noRecords">No records found</p>
+                </div>
+                <!-- Pagination -->
+                <div class="data-pagination" id="pagination">
+                    <button class="btn-page" id="btnPrev" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                    </button>
+                    <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                    <button class="btn-page" id="btnNext" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+        </div><!-- /connectedView -->
+
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-overlay" id="recordModal" style="display:none">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle" data-t="addRecord">Add Record</h3>
+                <button class="modal-close" id="btnModalClose">&times;</button>
+            </div>
+            <form id="recordForm" class="modal-form">
+                <input type="hidden" id="editRecordId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-t="thYear">Year</label>
+                        <input type="number" id="formYear" required min="2000" max="2100">
+                    </div>
+                    <div class="form-group">
+                        <label data-t="thMonth">Month</label>
+                        <input type="number" id="formMonth" required min="1" max="12">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-t="thStation">Police Station</label>
+                    <input type="text" id="formStation" required>
+                </div>
+                <div class="form-group">
+                    <label data-t="thCrimeType">Crime Type</label>
+                    <input type="text" id="formCrimeType" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-t="thInvestigation">Under Investigation</label>
+                        <input type="number" id="formInvestigation" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label data-t="thClosed">Closed</label>
+                        <input type="number" id="formClosed" value="0" min="0">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" id="btnCancel" data-t="cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-t="saveRecord">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Confirm Modal (replaces browser confirm) -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <div class="confirm-icon" id="confirmIcon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            </div>
+            <h3 class="confirm-title" id="confirmTitle">Are you sure?</h3>
+            <p class="confirm-message" id="confirmMessage">This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="btn-outline" id="confirmCancel">Cancel</button>
+                <button class="btn-primary confirm-danger" id="confirmOk">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/translations.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/data.js"></script>
+
+</body>
+
+</html>

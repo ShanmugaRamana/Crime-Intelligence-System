@@ -22,6 +22,10 @@ const TRANSLATIONS = {
         en: 'Station-wise',
         mr: 'ठाणेनिहाय'
     },
+    navData: {
+        en: 'Data',
+        mr: 'डेटा'
+    },
 
     // ─── KPI Labels ─────────────────────────────────────────
     totalCrimes: {
@@ -130,6 +134,18 @@ const TRANSLATIONS = {
         en: 'Station Records',
         mr: 'ठाणे नोंदी'
     },
+    stationPolarChart: {
+        en: 'Case Status Breakdown',
+        mr: 'प्रकरण स्थिती तपशील'
+    },
+    stationRadarChart: {
+        en: 'Monthly Crime Pattern',
+        mr: 'मासिक गुन्हे नमुना'
+    },
+    stationStackedArea: {
+        en: 'Crime Trend by Type',
+        mr: 'प्रकारानुसार गुन्हे ट्रेंड'
+    },
 
     // ─── Table Headers ──────────────────────────────────────
     tableYear: {
@@ -177,6 +193,42 @@ const TRANSLATIONS = {
     printBtn: {
         en: 'Print',
         mr: 'प्रिंट'
+    },
+
+    // ─── ACP Division Names ────────────────────────────────
+    acpCity: {
+        en: 'ACP City',
+        mr: 'एसीपी शहर'
+    },
+    acpChavni: {
+        en: 'ACP Chavni',
+        mr: 'एसीपी छावणी'
+    },
+    otherStations: {
+        en: 'Other Stations',
+        mr: 'इतर ठाणे'
+    },
+
+    // ─── Auth ───────────────────────────────────────────────
+    logout: {
+        en: 'Logout',
+        mr: 'बाहेर पडा'
+    },
+    login: {
+        en: 'Sign In',
+        mr: 'लॉग इन'
+    },
+    username: {
+        en: 'Username',
+        mr: 'वापरकर्ता नाव'
+    },
+    password: {
+        en: 'Password',
+        mr: 'पासवर्ड'
+    },
+    readOnlyAccess: {
+        en: 'Read-only access — Contact admin2 for edit permissions',
+        mr: 'फक्त वाचन — संपादन परवानगीसाठी admin2 शी संपर्क साधा'
     }
 };
 

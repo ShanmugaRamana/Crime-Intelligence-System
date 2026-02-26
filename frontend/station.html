@@ -39,6 +39,24 @@
                     </svg>
                     <span data-t="navStation">Station-wise</span>
                 </a>
+                <a href="/data.html" class="nav-tab" id="navData">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <span data-t="navData">Data</span>
+                </a>
+                <a href="/admin.html" class="nav-tab" id="navAdmin" style="display:none;">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    <span>Admin</span>
+                </a>
             </div>
             <div class="nav-right">
                 <div class="nav-status">
@@ -60,6 +78,23 @@
                     </svg>
                     <span data-t="printBtn">Print</span>
                 </button>
+                <div class="nav-user-menu">
+                    <div class="user-info">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span id="userDisplay">—</span>
+                    </div>
+                    <button class="btn-outline btn-logout" id="btnLogout">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span data-t="logout">Logout</span>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -96,9 +131,9 @@
             <button class="btn-reset" id="btnReset" data-t="filterReset">Reset Filters</button>
         </div>
 
-        <!-- Station selector -->
+        <!-- ACP Group Cards -->
         <div class="section-label reveal" style="--d:0.08s" data-t="selectStation">Select a Police Station</div>
-        <div class="station-selector" id="stationSelector"></div>
+        <div class="acp-selector" id="acpSelector"></div>
 
         <!-- Station content (shown after selection) -->
         <div id="stationContent" style="display:none;">
@@ -158,17 +193,17 @@
                     <div class="chart-title" data-t="stationCrimeTypes">Crime Types at Station</div>
                     <div class="chart-wrapper"><canvas id="chartStationCrimes"></canvas></div>
                 </div>
-                <div class="chart-card reveal" style="--d:0.12s" data-chart="stationDoughnut">
-                    <div class="chart-title" data-t="stationInvVsClosed">Investigation vs Closed</div>
-                    <div class="chart-wrapper"><canvas id="chartStationDoughnut"></canvas></div>
+                <div class="chart-card reveal" style="--d:0.12s" data-chart="stationPolar">
+                    <div class="chart-title" data-t="stationPolarChart">Case Status Breakdown</div>
+                    <div class="chart-wrapper"><canvas id="chartStationPolar"></canvas></div>
                 </div>
-                <div class="chart-card span-2 reveal" style="--d:0.05s" data-chart="stationTrend">
-                    <div class="chart-title" data-t="stationMonthlyTrend">Monthly Trend</div>
-                    <div class="chart-wrapper"><canvas id="chartStationTrend"></canvas></div>
+                <div class="chart-card span-2 reveal" style="--d:0.05s" data-chart="stationRadar">
+                    <div class="chart-title" data-t="stationRadarChart">Monthly Crime Pattern</div>
+                    <div class="chart-wrapper"><canvas id="chartStationRadar"></canvas></div>
                 </div>
-                <div class="chart-card reveal" style="--d:0.12s" data-chart="stationMonthly">
-                    <div class="chart-title" data-t="stationMonthBreakdown">Month-wise Breakdown</div>
-                    <div class="chart-wrapper"><canvas id="chartStationMonthly"></canvas></div>
+                <div class="chart-card reveal" style="--d:0.12s" data-chart="stationArea">
+                    <div class="chart-title" data-t="stationStackedArea">Crime Trend by Type</div>
+                    <div class="chart-wrapper"><canvas id="chartStationArea"></canvas></div>
                 </div>
                 <div class="chart-card full-width reveal" style="--d:0.05s">
                     <div class="chart-title" data-t="stationDataTable">Station Records</div>

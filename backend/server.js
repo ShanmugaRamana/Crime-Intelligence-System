@@ -1,101 +1,490 @@
 const express = require('express');
-const XLSX = require('xlsx');
 const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
+const db = require('./database');
+const excelSync = require('./excelSync');
+const auth = require('./auth');
+const { requireAuth, requireRole, requireAdmin } = require('./authMiddleware');
 
 const app = express();
 const PORT = 3000;
 
-// Path to the Excel file
-const EXCEL_PATH = path.join(__dirname, 'data', 'Crime_Data_Template (3).xlsx');
+// ═══════════════════════════════════════════════════════════════
+//  Security Middleware
+// ═══════════════════════════════════════════════════════════════
+
+// Helmet — secure HTTP headers
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:"],
+            connectSrc: ["'self'"]
+        }
+    },
+    crossOriginEmbedderPolicy: false
+}));
+
+// CORS — restrict to same origin
+app.use(cors({ origin: true, credentials: true }));
+
+// Cookie parser
+app.use(cookieParser());
+
+// General rate limiter — 100 requests per 15 min per IP
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+});
+app.use('/api/', generalLimiter);
+
+// Login rate limiter — 5 attempts per 15 min per IP
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many login attempts. Please try again after 15 minutes.' }
+});
+
+// Body parsing
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// Multer for file uploads
+const upload = multer({
+    dest: path.join(__dirname, 'data', 'uploads'),
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext === '.xlsx' || ext === '.xls') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only .xlsx and .xls files are allowed'));
+        }
+    }
+});
+
+// Path to the Excel file (default — can be changed via settings)
+const SETTINGS_PATH = path.join(__dirname, 'data', 'settings.json');
+let EXCEL_PATH = null; // No default — user connects via Data page
+
+// Load saved settings
+function loadSettings() {
+    try {
+        if (fs.existsSync(SETTINGS_PATH)) {
+            const settings = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+            if (settings.excelPath && fs.existsSync(settings.excelPath)) {
+                EXCEL_PATH = settings.excelPath;
+            }
+        }
+    } catch (e) {
+        console.log('  [Settings] Using default Excel path');
+    }
+}
+
+function saveSettings() {
+    fs.writeFileSync(SETTINGS_PATH, JSON.stringify({ excelPath: EXCEL_PATH }, null, 2));
+}
 
 // SSE clients
 let sseClients = [];
 
-// ─── Excel Parser ────────────────────────────────────────────
-function readExcelData() {
-    try {
-        const workbook = XLSX.readFile(EXCEL_PATH);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const rawData = XLSX.utils.sheet_to_json(worksheet);
+// ═══════════════════════════════════════════════════════════════
+//  Initialize
+// ═══════════════════════════════════════════════════════════════
+loadSettings();
+db.initDB();
+auth.initAuthDB(db.getDB());
 
-        // Normalize column names (handle possible variations)
-        const records = rawData.map(row => ({
-            year: row['Year'] || row['year'] || 0,
-            month: row['Month'] || row['month'] || 0,
-            policeStation: row['Police Station'] || row['police station'] || '',
-            crimeType: row['Crime Type'] || row['crime type'] || '',
-            underInvestigation: parseInt(row['Under Investigation'] || row['under investigation'] || 0),
-            closed: parseInt(row['Closed'] || row['closed'] || 0)
-        }));
-
-        // Compute summary
-        const totalCrimes = records.length;
-        const totalUnderInvestigation = records.reduce((s, r) => s + r.underInvestigation, 0);
-        const totalClosed = records.reduce((s, r) => s + r.closed, 0);
-        const closureRate = totalUnderInvestigation + totalClosed > 0
-            ? ((totalClosed / (totalUnderInvestigation + totalClosed)) * 100).toFixed(1)
-            : 0;
-
-        // Unique values for filters
-        const years = [...new Set(records.map(r => r.year))].sort();
-        const months = [...new Set(records.map(r => r.month))].sort((a, b) => a - b);
-        const stations = [...new Set(records.map(r => r.policeStation))].sort();
-        const crimeTypes = [...new Set(records.map(r => r.crimeType))].sort();
-
-        // Get file modification time
-        const stats = fs.statSync(EXCEL_PATH);
-        const lastModified = stats.mtime.toISOString();
-
-        return {
-            records,
-            summary: {
-                totalCrimes,
-                totalUnderInvestigation,
-                totalClosed,
-                closureRate: parseFloat(closureRate)
-            },
-            filters: { years, months, stations, crimeTypes },
-            lastModified
-        };
-    } catch (err) {
-        console.error('Error reading Excel file:', err.message);
-        return {
-            records: [],
-            summary: { totalCrimes: 0, totalUnderInvestigation: 0, totalClosed: 0, closureRate: 0 },
-            filters: { years: [], months: [], stations: [], crimeTypes: [] },
-            lastModified: null,
-            error: err.message
-        };
+if (EXCEL_PATH) {
+    const count = db.getRecordCount();
+    if (count === 0) {
+        console.log('  [Startup] Saved data source found — loading...');
+        excelSync.loadExcelIntoDB(EXCEL_PATH);
+    } else {
+        console.log(`  [Startup] Database has ${count} records — ready`);
     }
+} else {
+    console.log('  [Startup] No data source connected — go to Data page to connect');
 }
 
-// ─── Static Files ────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+// ═══════════════════════════════════════════════════════════════
+//  Static Files & Auth Redirect
+// ═══════════════════════════════════════════════════════════════
 
-// ─── API: Get Data ───────────────────────────────────────────
-app.get('/api/data', (req, res) => {
-    const data = readExcelData();
-    res.json(data);
+// Serve login page without auth
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'login.html'));
 });
 
-// ─── API: SSE Events ─────────────────────────────────────────
-app.get('/api/events', (req, res) => {
+// Serve static assets (CSS, JS, images, fonts, libs) without auth
+app.use('/css', express.static(path.join(__dirname, '..', 'frontend', 'css')));
+app.use('/js', express.static(path.join(__dirname, '..', 'frontend', 'js')));
+app.use('/img', express.static(path.join(__dirname, '..', 'frontend', 'img')));
+app.use('/fonts', express.static(path.join(__dirname, '..', 'frontend', 'fonts')));
+app.use('/libs', express.static(path.join(__dirname, '..', 'frontend', 'libs')));
+
+// Protected HTML pages — require auth, redirect to login if not authenticated
+app.get('/', (req, res, next) => {
+    requireAuth(req, res, () => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+    });
+});
+
+app.get('/index.html', (req, res, next) => {
+    requireAuth(req, res, () => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+    });
+});
+
+app.get('/station.html', (req, res, next) => {
+    requireAuth(req, res, () => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'station.html'));
+    });
+});
+
+app.get('/data.html', (req, res, next) => {
+    requireAuth(req, res, () => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'data.html'));
+    });
+});
+
+app.get('/admin.html', (req, res, next) => {
+    requireAuth(req, res, () => {
+        if (req.user.role !== 'admin') return res.redirect('/');
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'admin.html'));
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Auth Routes (Public)
+// ═══════════════════════════════════════════════════════════════
+
+// Login
+app.post('/api/login', loginLimiter, (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: 'Username and password are required' });
+        }
+
+        // Sanitize input
+        const cleanUsername = String(username).trim().toLowerCase().slice(0, 50);
+        const cleanPassword = String(password).slice(0, 128);
+
+        const user = auth.authenticateUser(cleanUsername, cleanPassword);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        const token = auth.generateToken(user);
+
+        // Set HttpOnly cookie
+        res.cookie('z1cis_token', token, {
+            httpOnly: true,
+            secure: false, // set to true in production with HTTPS
+            sameSite: 'lax',
+            maxAge: 8 * 60 * 60 * 1000, // 8 hours
+            path: '/'
+        });
+
+        res.json({
+            success: true,
+            user: { username: user.username, role: user.role }
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Login failed' });
+    }
+});
+
+// Logout
+app.post('/api/logout', (req, res) => {
+    res.clearCookie('z1cis_token', { path: '/' });
+    res.json({ success: true });
+});
+
+// Current user info
+app.get('/api/me', requireAuth, (req, res) => {
+    res.json({
+        username: req.user.username,
+        role: req.user.role
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Admin API — User Management (Admin Only)
+// ═══════════════════════════════════════════════════════════════
+
+// List all users
+app.get('/api/users', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const users = auth.getAllUsers();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create new user
+app.post('/api/users', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const { username, password, role } = req.body;
+        const user = auth.createUser(
+            String(username || '').trim().toLowerCase(),
+            String(password || ''),
+            String(role || '').toLowerCase()
+        );
+        res.status(201).json(user);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Update user role
+app.put('/api/users/:id/role', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const { role } = req.body;
+        const user = auth.updateUserRole(userId, String(role || '').toLowerCase());
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete user
+app.delete('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        auth.deleteUser(userId);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Data API — Read (Any Authenticated User)
+// ═══════════════════════════════════════════════════════════════
+
+// Get Data Summary (for dashboards)
+app.get('/api/data', requireAuth, (req, res) => {
+    try {
+        const data = db.getDataSummary();
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Paginated Records (for Data page)
+app.get('/api/records', requireAuth, (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const filters = {
+            year: req.query.year,
+            month: req.query.month,
+            station: req.query.station,
+            crimeType: req.query.crimeType,
+            search: req.query.search
+        };
+        const data = db.getRecordsPaginated(page, limit, filters);
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Settings
+app.get('/api/settings', requireAuth, (req, res) => {
+    res.json({
+        excelPath: EXCEL_PATH,
+        connected: !!EXCEL_PATH,
+        recordCount: db.getRecordCount(),
+        dbPath: path.join(__dirname, 'data', 'crime_data.db')
+    });
+});
+
+// Export as Excel
+app.get('/api/export', requireAuth, (req, res) => {
+    try {
+        const exportPath = path.join(__dirname, 'data', 'export_crime_data.xlsx');
+        excelSync.exportToExcel(exportPath);
+        res.download(exportPath, 'Crime_Data_Export.xlsx', (err) => {
+            // Clean up temp file after download
+            if (fs.existsSync(exportPath)) fs.unlinkSync(exportPath);
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Filter options
+app.get('/api/filter-options', requireAuth, (req, res) => {
+    try {
+        const data = db.getDataSummary();
+        res.json(data.filters);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  Data API — Write (Editor Role Only)
+// ═══════════════════════════════════════════════════════════════
+
+// Add Record
+app.post('/api/records', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        const record = db.addRecord(req.body);
+        // Write back to Excel
+        excelSync.writeBackToExcel(EXCEL_PATH);
+        notifyClients();
+        res.status(201).json(record);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update Record
+app.put('/api/records/:id', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        const record = db.updateRecord(parseInt(req.params.id), req.body);
+        if (!record) return res.status(404).json({ error: 'Record not found' });
+        // Write back to Excel
+        excelSync.writeBackToExcel(EXCEL_PATH);
+        notifyClients();
+        res.json(record);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete Record
+app.delete('/api/records/:id', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        const result = db.deleteRecord(parseInt(req.params.id));
+        if (result.changes === 0) return res.status(404).json({ error: 'Record not found' });
+        // Write back to Excel
+        excelSync.writeBackToExcel(EXCEL_PATH);
+        notifyClients();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Upload & Import Excel
+app.post('/api/upload-excel', requireAuth, requireRole('editor'), upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        // Move uploaded file to data directory
+        const destPath = path.join(__dirname, 'data', req.file.originalname);
+        fs.renameSync(req.file.path, destPath);
+
+        // Update Excel path
+        EXCEL_PATH = destPath;
+        saveSettings();
+
+        // Import into SQLite
+        const result = excelSync.loadExcelIntoDB(destPath);
+        if (result.success) {
+            notifyClients();
+            res.json({ success: true, count: result.count, path: destPath });
+        } else {
+            res.status(500).json({ error: result.error });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Reload from Excel
+app.post('/api/reload', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        const result = excelSync.loadExcelIntoDB(EXCEL_PATH);
+        if (result.success) {
+            notifyClients();
+            res.json({ success: true, count: result.count });
+        } else {
+            res.status(500).json({ error: result.error });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Connect data source
+app.post('/api/connect', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        let { filePath } = req.body;
+        if (!filePath) return res.status(400).json({ error: 'No file path provided' });
+
+        // Strip surrounding quotes (pasted from file explorer)
+        filePath = String(filePath).trim().replace(/^"|"$/g, '');
+
+        if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found at that path' });
+
+        EXCEL_PATH = filePath;
+        saveSettings();
+
+        const result = excelSync.loadExcelIntoDB(filePath);
+        if (result.success) {
+            startWatcher();
+            notifyClients();
+            res.json({ success: true, count: result.count, path: filePath });
+        } else {
+            res.status(500).json({ error: result.error });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Disconnect data source
+app.post('/api/disconnect', requireAuth, requireRole('editor'), (req, res) => {
+    try {
+        EXCEL_PATH = null;
+        db.clearAll();
+        if (fs.existsSync(SETTINGS_PATH)) fs.unlinkSync(SETTINGS_PATH);
+        if (watcher) { watcher.close(); watcher = null; }
+        notifyClients();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  SSE Events (Authenticated)
+// ═══════════════════════════════════════════════════════════════
+app.get('/api/events', requireAuth, (req, res) => {
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive'
     });
 
-    // Send initial heartbeat
     res.write('data: {"type":"connected"}\n\n');
-
-    // Register client
     sseClients.push(res);
 
-    // Remove client on disconnect
     req.on('close', () => {
         sseClients = sseClients.filter(c => c !== res);
     });
@@ -108,39 +497,80 @@ function notifyClients() {
     });
 }
 
-// ─── File Watcher ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  File Watcher
+// ═══════════════════════════════════════════════════════════════
 let debounceTimer = null;
-const watcher = chokidar.watch(EXCEL_PATH, {
-    persistent: true,
-    awaitWriteFinish: {
-        stabilityThreshold: 1000,
-        pollInterval: 300
+let watcher = null;
+
+function startWatcher() {
+    if (watcher) watcher.close();
+    if (!EXCEL_PATH || !fs.existsSync(EXCEL_PATH)) return;
+
+    watcher = chokidar.watch(EXCEL_PATH, {
+        persistent: true,
+        awaitWriteFinish: {
+            stabilityThreshold: 1000,
+            pollInterval: 300
+        }
+    });
+
+    watcher.on('change', () => {
+        // Skip if we triggered this change (write-back)
+        if (excelSync.getIsSyncing()) return;
+
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            console.log(`  [Watcher] Excel file changed externally — re-syncing...`);
+            excelSync.loadExcelIntoDB(EXCEL_PATH);
+            notifyClients();
+        }, 500);
+    });
+
+    watcher.on('error', (error) => {
+        console.error('  [Watcher] Error:', error);
+    });
+}
+
+if (EXCEL_PATH) startWatcher();
+
+// ═══════════════════════════════════════════════════════════════
+//  Error Handler (catches multer and other errors)
+// ═══════════════════════════════════════════════════════════════
+app.use((err, req, res, next) => {
+    if (err && err.name === 'MulterError') {
+        return res.status(400).json({ error: 'File upload error: ' + err.message });
     }
+    if (err) {
+        console.error('  [Error]', err.message);
+        return res.status(500).json({ error: err.message || 'Internal server error' });
+    }
+    next();
 });
 
-watcher.on('change', (filePath) => {
-    // Debounce to avoid multiple rapid triggers
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        console.log(`[${new Date().toLocaleTimeString()}] Excel file changed — pushing update to ${sseClients.length} client(s)`);
-        notifyClients();
-    }, 500);
-});
+// ═══════════════════════════════════════════════════════════════
+//  Start Server
+// ═══════════════════════════════════════════════════════════════
 
-watcher.on('error', (error) => {
-    console.error('File watcher error:', error);
-});
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'data', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-// ─── Start Server ────────────────────────────────────────────
 app.listen(PORT, () => {
+    const recordCount = db.getRecordCount();
     console.log('');
     console.log('  ╔══════════════════════════════════════════════╗');
     console.log('  ║   Zone 1 Crime Intelligence System           ║');
     console.log('  ║   झोन 1 गुन्हे गुप्तचर प्रणाली                  ║');
     console.log('  ╠══════════════════════════════════════════════╣');
     console.log(`  ║   Server:  http://localhost:${PORT}              ║`);
-    console.log(`  ║   Excel:   ${path.basename(EXCEL_PATH)}   ║`);
-    console.log('  ║   Status:  Watching for changes...           ║');
+    console.log(`  ║   Excel:   ${(EXCEL_PATH ? path.basename(EXCEL_PATH) : 'Not connected').substring(0, 30).padEnd(30)}   ║`);
+    console.log(`  ║   Records: ${String(recordCount).padEnd(30)}   ║`);
+    console.log('  ║   Database: SQLite (WAL mode)                ║');
+    console.log('  ║   Auth:    ✓ JWT + bcrypt + roles            ║');
+    console.log('  ║   Security: Helmet, CORS, Rate-limit         ║');
+    console.log(`  ║   Status:  ${EXCEL_PATH ? 'Watching for changes...' : 'Waiting for data source...'}   ║`);
     console.log('  ╚══════════════════════════════════════════════╝');
     console.log('');
 });
+

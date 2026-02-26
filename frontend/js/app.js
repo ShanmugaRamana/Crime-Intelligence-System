@@ -1,16 +1,111 @@
 /* ═══════════════════════════════════════════════════════════════
    Zone 1 Crime Intelligence System — Shared App Logic
-   SSE, Data Fetching, Language Toggle, Filters
+   SSE, Data Fetching, Language Toggle, Filters, Auth
    ═══════════════════════════════════════════════════════════════ */
 
 let currentLang = 'en';
 let allData = null;
 let filteredRecords = [];
 
+// ─── Auth State ──────────────────────────────────────────────
+window.userRole = null;
+window.currentUser = null;
+
+// ─── Station Order & ACP Division Config ─────────────────────
+const STATION_ORDER = [
+    { acp: 'acpCity', stations: ['City Chowk', 'Kranti Chowk', 'Vedant Nagar', 'Begumpura'] },
+    { acp: 'acpChavni', stations: ['Chawni', 'Waluj', 'MIDC Waluj', 'Daulatabad'] }
+];
+
+// Flat ordered list for quick lookups
+const STATION_FLAT_ORDER = STATION_ORDER.flatMap(g => g.stations);
+
+/**
+ * Sort station names according to the defined PS order.
+ * Stations not in STATION_ORDER are appended alphabetically at the end.
+ */
+function sortStationsByOrder(stationList) {
+    return [...stationList].sort((a, b) => {
+        const idxA = STATION_FLAT_ORDER.findIndex(s => s.toLowerCase() === a.toLowerCase());
+        const idxB = STATION_FLAT_ORDER.findIndex(s => s.toLowerCase() === b.toLowerCase());
+        const oA = idxA >= 0 ? idxA : 9999;
+        const oB = idxB >= 0 ? idxB : 9999;
+        if (oA !== oB) return oA - oB;
+        return a.localeCompare(b);
+    });
+}
+
+/**
+ * Get the PS number (1-based) for a station name.
+ * Returns 0 if the station is not in the defined order.
+ */
+function getStationNumber(stationName) {
+    const idx = STATION_FLAT_ORDER.findIndex(s => s.toLowerCase() === stationName.toLowerCase());
+    return idx >= 0 ? idx + 1 : 0;
+}
+
+/**
+ * Find which ACP group a station belongs to (case-insensitive).
+ * Returns the group object or null.
+ */
+function getStationACPGroup(stationName) {
+    return STATION_ORDER.find(g =>
+        g.stations.some(s => s.toLowerCase() === stationName.toLowerCase())
+    ) || null;
+}
+
+// ─── Auth Check ─────────────────────────────────────────────
+async function checkAuth() {
+    try {
+        const res = await fetch('/api/me', { credentials: 'same-origin' });
+        if (!res.ok) {
+            window.location.href = '/login.html';
+            return false;
+        }
+        const user = await res.json();
+        window.userRole = user.role;
+        window.currentUser = user.username;
+
+        // Update user display in nav
+        const userDisplay = document.getElementById('userDisplay');
+        if (userDisplay) userDisplay.textContent = user.username;
+
+        // Role-based nav visibility
+        const dataTab = document.getElementById('navData');
+        const adminTab = document.getElementById('navAdmin');
+
+        // Only editors can see Data tab
+        if (user.role !== 'editor') {
+            if (dataTab) dataTab.style.display = 'none';
+        }
+
+        // Only admins can see Admin tab
+        if (user.role === 'admin') {
+            if (adminTab) adminTab.style.display = '';
+        }
+
+        return true;
+    } catch (err) {
+        window.location.href = '/login.html';
+        return false;
+    }
+}
+
+async function handleLogout() {
+    try {
+        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch (e) { /* ignore */ }
+    window.location.href = '/login.html';
+}
+
 // ─── Data Fetching ──────────────────────────────────────────
 async function fetchData() {
     try {
-        const res = await fetch('/api/data');
+        const res = await fetch('/api/data', { credentials: 'same-origin' });
+        if (res.status === 401) {
+            window.location.href = '/login.html';
+            return null;
+        }
         allData = await res.json();
         applyFilters();
         return allData;
@@ -224,10 +319,14 @@ function toggleSidebar() {
 }
 
 // ─── Init ───────────────────────────────────────────────────
-function initApp(onReady) {
+async function initApp(onReady) {
     // Restore language preference
     const savedLang = localStorage.getItem('z1cis_lang');
     if (savedLang) currentLang = savedLang;
+
+    // Check authentication first
+    const isAuthed = await checkAuth();
+    if (!isAuthed) return;
 
     // Bind filter events
     document.querySelectorAll('.filter-bar select').forEach(sel => {
@@ -245,6 +344,10 @@ function initApp(onReady) {
 
     const printBtn = document.getElementById('btnPrint');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+    // Bind logout button
+    const logoutBtn = document.getElementById('btnLogout');
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
 
     // Fetch data and start SSE
     fetchData().then(() => {

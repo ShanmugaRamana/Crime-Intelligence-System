@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Zone 1 Crime Intelligence</title>
+    <meta name="description" content="User Management — Aurangabad City Police">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+    <!-- Floating Top Nav -->
+    <nav class="top-nav">
+        <div class="nav-inner">
+            <a class="nav-brand" href="/">
+                <img src="/img/logo.png" alt="Logo">
+                <div class="nav-brand-text">
+                    <span class="nav-brand-title" data-t="appTitle">Zone 1 Crime Intelligence System</span>
+                    <span class="nav-brand-sub" data-t="appSubtitle">Aurangabad City Police</span>
+                </div>
+            </a>
+            <div class="nav-divider"></div>
+            <div class="nav-tabs">
+                <a href="/index.html" class="nav-tab" id="navOverall">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                    <span data-t="navOverall">Overall Intelligence</span>
+                </a>
+                <a href="/station.html" class="nav-tab" id="navStation">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16" />
+                    </svg>
+                    <span data-t="navStation">Station-wise</span>
+                </a>
+                <a href="/data.html" class="nav-tab" id="navData">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    <span data-t="navData">Data</span>
+                </a>
+                <a href="/admin.html" class="nav-tab active" id="navAdmin" style="display:none;">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    <span>Admin</span>
+                </a>
+            </div>
+            <div class="nav-right">
+                <div class="nav-status">
+                    <span class="status-dot"></span>
+                    <span id="lastUpdated"></span>
+                </div>
+                <button class="btn-outline" id="langToggle">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                            d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2" />
+                    </svg>
+                    <span>मराठी</span>
+                </button>
+                <div class="nav-user-menu">
+                    <div class="user-info">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span id="userDisplay">—</span>
+                    </div>
+                    <button class="btn-outline btn-logout" id="btnLogout">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" style="padding-top: 4.5rem;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 2.5rem;">
+
+            <!-- Admin Header -->
+            <div class="admin-header">
+                <h2>
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    User Management
+                </h2>
+                <span class="user-count" id="userCount">0 users</span>
+            </div>
+
+            <!-- Add User Card -->
+            <div class="add-user-card">
+                <h3>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="width:18px;height:18px;vertical-align:-3px;margin-right:4px;">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <line x1="20" y1="8" x2="20" y2="14" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                    Add New User
+                </h3>
+                <form class="add-user-form" id="addUserForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="newUsername" placeholder="Enter username" required minlength="3"
+                            autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="newPassword" placeholder="Min 6 characters" required minlength="6">
+                    </div>
+                    <div class="form-group" style="min-width: 160px;">
+                        <label>Permission</label>
+                        <select id="newRole" required>
+                            <option value="viewer">Read Only</option>
+                            <option value="editor">Read &amp; Write</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn-primary" style="padding: 0.6rem 1.5rem;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                style="width:16px;height:16px;">
+                                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                                <circle cx="8.5" cy="7" r="4" />
+                                <line x1="20" y1="8" x2="20" y2="14" />
+                                <line x1="23" y1="11" x2="17" y2="11" />
+                            </svg>
+                            Add User
+                        </button>
+                    </div>
+                </form>
+                <div id="addUserError" style="color: #ef4444; font-size: 0.8rem; margin-top: 0.75rem; display: none;">
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="users-table-card">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Username</th>
+                            <th>Permission</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-400);">Loading
+                                users...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Confirm Modal -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <div class="confirm-icon danger" id="confirmIcon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            </div>
+            <h3 class="confirm-title" id="confirmTitle">Are you sure?</h3>
+            <p class="confirm-message" id="confirmMessage">This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="btn-outline" id="confirmCancel">Cancel</button>
+                <button class="btn-primary confirm-danger" id="confirmOk">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/js/translations.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/admin.js"></script>
+
+</body>
+
+</html>

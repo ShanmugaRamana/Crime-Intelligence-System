@@ -7,3 +7,11 @@ analysis_output.txt
 logo.png
 Sample 1.png
 Sample 2.png
+
+# Backend runtime data
+backend/data/jwt_secret.key
+backend/data/*.db
+backend/data/*.db-shm
+backend/data/*.db-wal
+backend/data/uploads/
+backend/data/settings.json

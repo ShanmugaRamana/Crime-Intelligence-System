@@ -6,6 +6,7 @@ A real-time crime intelligence dashboard built for **Zone 1, Aurangabad City Pol
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-4.x-FF6384?logo=chart.js&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
@@ -15,11 +16,15 @@ A real-time crime intelligence dashboard built for **Zone 1, Aurangabad City Pol
 - **📊 Interactive Dashboard** — Rich visualizations with Chart.js including bar, doughnut, radar, and heatmap charts
 - **🔄 Real-Time Updates** — Server-Sent Events (SSE) automatically push data changes to the browser when the Excel file is modified
 - **🏢 Station-wise Analysis** — Dedicated view for comparing crime data across individual police stations
+- **📋 Data Management** — Connect Excel files, upload data, add/edit/delete records from the browser
+- **🔐 Authentication & Roles** — JWT-based login with role-based access control (Admin, Editor, Viewer)
+- **👥 User Management** — Admin panel for creating/managing users and assigning permissions
 - **🌐 Bilingual Support** — Full English ↔ Marathi language toggle for all UI elements
 - **📈 KPI Cards** — At-a-glance metrics for total crimes, under investigation, closed cases, and closure rate
-- **🔍 Filters** — Filter data by year and month
+- **🔍 Filters** — Filter data by year, month, station, and crime type
 - **🖨️ Print Ready** — Built-in print support for generating reports
 - **📱 Responsive** — Works seamlessly across desktop and mobile devices
+- **🛡️ Security** — Helmet, CORS, rate limiting, bcrypt password hashing, HttpOnly cookies
 
 ---
 
@@ -27,19 +32,28 @@ A real-time crime intelligence dashboard built for **Zone 1, Aurangabad City Pol
 
 ```
 ├── backend/
-│   ├── server.js               # Express server, Excel parser, SSE & file watcher
+│   ├── server.js               # Express server, APIs, SSE & file watcher
+│   ├── auth.js                 # Authentication — users, passwords, JWT
+│   ├── authMiddleware.js       # Auth & role-based middleware
+│   ├── database.js             # SQLite database management
+│   ├── excelSync.js            # Excel ↔ SQLite synchronization
 │   ├── package.json            # Node.js dependencies
-│   └── data/
-│       └── Crime_Data_Template.xlsx   # Source crime data (Excel)
+│   └── data/                   # Runtime data (DB, uploads, settings)
 │
 ├── frontend/
 │   ├── index.html              # Overall Intelligence dashboard
 │   ├── station.html            # Station-wise analysis page
-│   ├── css/                    # Stylesheets
+│   ├── data.html               # Data management page
+│   ├── admin.html              # User management page (Admin only)
+│   ├── login.html              # Login page
+│   ├── css/style.css           # Stylesheet
 │   ├── js/
-│   │   ├── app.js              # Core app logic, SSE connection, filters
+│   │   ├── app.js              # Core app logic, auth, SSE, filters
 │   │   ├── overall.js          # Overall dashboard charts
 │   │   ├── station.js          # Station-wise charts
+│   │   ├── data.js             # Data management logic
+│   │   ├── admin.js            # User management logic
+│   │   ├── login.js            # Login form handler
 │   │   └── translations.js    # English ↔ Marathi translations
 │   ├── img/                    # Images & icons
 │   ├── fonts/                  # Custom fonts
@@ -78,6 +92,23 @@ npm start
 
 Open your browser and navigate to **http://localhost:3000**
 
+### Default Credentials
+
+| Username | Password | Role | Access |
+|----------|----------|------|--------|
+| `admin1` | `admin1@123` | Admin | View dashboards + manage users |
+| `admin2` | `admin2@123` | Editor | View dashboards + manage data |
+
+---
+
+## 🔐 Roles & Permissions
+
+| Role | Dashboard | Data Management | User Management |
+|------|-----------|-----------------|-----------------|
+| **Admin** | ✅ View | ❌ | ✅ Full control |
+| **Editor** | ✅ View | ✅ Full CRUD | ❌ |
+| **Viewer** | ✅ View | ❌ | ❌ |
+
 ---
 
 ## 📊 Dashboard Views
@@ -86,6 +117,8 @@ Open your browser and navigate to **http://localhost:3000**
 |------|-------------|
 | **Overall Intelligence** | Zone-level crime summary with hotspot analysis, crime type distribution, monthly trends, heatmaps, and more |
 | **Station-wise** | Drill-down into individual police station performance and crime breakdown |
+| **Data** | Connect Excel files, upload data, add/edit/delete records (Editor only) |
+| **Admin** | Manage users and assign permissions (Admin only) |
 
 ### Charts Available
 
@@ -102,7 +135,7 @@ Open your browser and navigate to **http://localhost:3000**
 
 ## 📋 Data Format
 
-The system reads from an Excel file (`Crime_Data_Template.xlsx`) with the following columns:
+The system reads from an Excel file (`.xlsx`) with the following columns:
 
 | Column | Description |
 |--------|-------------|
@@ -122,6 +155,9 @@ The system reads from an Excel file (`Crime_Data_Template.xlsx`) with the follow
 | Layer | Technology |
 |-------|-----------|
 | **Backend** | Node.js, Express |
+| **Database** | SQLite (better-sqlite3, WAL mode) |
+| **Auth** | JWT, bcrypt, HttpOnly cookies |
+| **Security** | Helmet, CORS, express-rate-limit |
 | **Data Parsing** | SheetJS (xlsx) |
 | **File Watching** | Chokidar |
 | **Frontend** | Vanilla HTML, CSS, JavaScript |
