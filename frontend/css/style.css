@@ -352,7 +352,7 @@ body::-webkit-scrollbar {
 
 /* ─── Page Shell ─────────────────────────────────────────────── */
 .page-shell {
-    padding: 78px 24px 40px;
+    padding: 72px 24px 32px;
 }
 
 /* ─── Filter Bar ─────────────────────────────────────────────── */
@@ -425,7 +425,7 @@ body::-webkit-scrollbar {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .kpi-card {
@@ -531,14 +531,14 @@ body::-webkit-scrollbar {
 .chart-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
+    gap: 16px;
 }
 
 .chart-card {
     background: var(--surface);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
-    padding: 24px 28px;
+    padding: 20px 22px;
     box-shadow: var(--shadow-xs);
     cursor: pointer;
     transition:
@@ -575,7 +575,7 @@ body::-webkit-scrollbar {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-900);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     letter-spacing: -0.01em;
     display: flex;
     align-items: center;

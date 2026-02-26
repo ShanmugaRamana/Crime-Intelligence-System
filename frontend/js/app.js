@@ -91,11 +91,11 @@ async function checkAuth() {
     }
 }
 
-async function handleLogout() {
-    try {
-        await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch (e) { /* ignore */ }
+function handleLogout() {
+    // Redirect instantly — don't wait for server response
     window.location.href = '/login.html';
+    // Fire cookie-clearing POST in background (best-effort)
+    fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => { });
 }
 
 // ─── Data Fetching ──────────────────────────────────────────

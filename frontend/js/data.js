@@ -280,6 +280,7 @@ async function loadRecords() {
 // ─── Render Table ────────────────────────────────────────────
 function renderTable(records) {
     const tbody = document.getElementById('tableBody');
+    const fragment = document.createDocumentFragment();
     tbody.innerHTML = '';
 
     const isViewer = window.userRole === 'viewer';
@@ -287,6 +288,14 @@ function renderTable(records) {
     records.forEach((rec, idx) => {
         const row = document.createElement('tr');
         row.dataset.id = rec.id;
+        // Store record data for quick edit modal population
+        row.dataset.year = rec.year;
+        row.dataset.month = rec.month;
+        row.dataset.station = rec.police_station;
+        row.dataset.crimeType = rec.crime_type;
+        row.dataset.investigation = rec.under_investigation;
+        row.dataset.closed = rec.closed;
+
         row.innerHTML = `
             <td class="cell-num">${(currentPage - 1) * PAGE_LIMIT + idx + 1}</td>
             <td class="${isViewer ? '' : 'cell-editable'}" data-field="year">${rec.year}</td>
@@ -297,10 +306,10 @@ function renderTable(records) {
             <td class="${isViewer ? '' : 'cell-editable'}" data-field="closed">${rec.closed}</td>
             <td class="cell-actions">
                 ${isViewer ? '' : `
-                <button class="btn-icon btn-edit" title="Edit" onclick="openModal(${rec.id})">
+                <button class="btn-icon btn-edit" title="Edit" data-action="edit" data-record-id="${rec.id}">
                     <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
-                <button class="btn-icon btn-delete" title="Delete" onclick="deleteRecord(${rec.id})">
+                <button class="btn-icon btn-delete" title="Delete" data-action="delete" data-record-id="${rec.id}">
                     <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
                 `}
@@ -313,9 +322,32 @@ function renderTable(records) {
             });
         }
 
-        tbody.appendChild(row);
+        fragment.appendChild(row);
     });
+
+    tbody.appendChild(fragment);
 }
+
+// ─── Event Delegation for Edit / Delete buttons ──────────────
+(function initTableDelegation() {
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+    tbody.addEventListener('click', (e) => {
+        // Find the closest button with a data-action
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const recordId = parseInt(btn.dataset.recordId, 10);
+        if (!recordId) return;
+
+        if (action === 'edit') {
+            openModal(recordId);
+        } else if (action === 'delete') {
+            deleteRecord(recordId);
+        }
+    });
+})();
 
 // ─── Inline Editing ──────────────────────────────────────────
 function startInlineEdit(cell, recordId) {
@@ -372,7 +404,7 @@ function renderPagination(data) {
 }
 
 // ─── Modal (Add / Edit) ─────────────────────────────────────
-async function openModal(editId) {
+function openModal(editId) {
     const modal = document.getElementById('recordModal');
     const title = document.getElementById('modalTitle');
     const form = document.getElementById('recordForm');
@@ -382,22 +414,18 @@ async function openModal(editId) {
 
     if (editId) {
         title.textContent = 'Edit Record';
-        try {
-            const res = await fetch(`/api/records?page=1&limit=9999`, { credentials: 'same-origin' });
-            const data = await res.json();
-            const rec = data.records.find(r => r.id === editId);
-
-            if (rec) {
-                document.getElementById('editRecordId').value = rec.id;
-                document.getElementById('formYear').value = rec.year;
-                document.getElementById('formMonth').value = rec.month;
-                document.getElementById('formStation').value = rec.police_station;
-                document.getElementById('formCrimeType').value = rec.crime_type;
-                document.getElementById('formInvestigation').value = rec.under_investigation;
-                document.getElementById('formClosed').value = rec.closed;
-            }
-        } catch (err) {
-            showToast('Error loading record', 'error');
+        // Read data directly from the table row — no server fetch needed
+        const row = document.querySelector(`tr[data-id="${editId}"]`);
+        if (row) {
+            document.getElementById('editRecordId').value = editId;
+            document.getElementById('formYear').value = row.dataset.year;
+            document.getElementById('formMonth').value = row.dataset.month;
+            document.getElementById('formStation').value = row.dataset.station;
+            document.getElementById('formCrimeType').value = row.dataset.crimeType;
+            document.getElementById('formInvestigation').value = row.dataset.investigation;
+            document.getElementById('formClosed').value = row.dataset.closed;
+        } else {
+            showToast('Record not found in table', 'error');
             return;
         }
     } else {

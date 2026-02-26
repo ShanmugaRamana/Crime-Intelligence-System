@@ -67,17 +67,17 @@
             }
 
             if (res.ok && data.success) {
-                // Smooth transition out
+                // Quick transition out
                 const panel = document.querySelector('.login-panel');
                 if (panel) {
-                    panel.style.transition = 'opacity 0.3s, transform 0.3s';
+                    panel.style.transition = 'opacity 0.15s, transform 0.15s';
                     panel.style.opacity = '0';
                     panel.style.transform = 'translateX(20px)';
                 }
 
                 setTimeout(() => {
                     window.location.href = '/index.html';
-                }, 300);
+                }, 100);
             } else if (res.status === 429) {
                 showError('Too many attempts. Please wait and try again.');
                 setLoading(false);
