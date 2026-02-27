@@ -15,7 +15,9 @@ A real-time crime intelligence dashboard built for **Zone 1, Aurangabad City Pol
 
 - **📊 Interactive Dashboard** — Rich visualizations with Chart.js including bar, doughnut, radar, and heatmap charts
 - **🔄 Real-Time Updates** — Server-Sent Events (SSE) automatically push data changes to the browser when the Excel file is modified
-- **🏢 Station-wise Analysis** — Dedicated view for comparing crime data across individual police stations
+- **🏢 Station-wise Analysis** — Dedicated view for analyzing individual police stations
+- **⚖️ Station Comparison** — Compare up to 7 police stations side-by-side with overlaid grouped bar charts, radar charts, and trend lines
+- **⚡ High Performance** — Instant tab switching with `sessionStorage` caching, static asset caching, and preloaded fonts for a seamless experience
 - **📋 Data Management** — Connect Excel files, upload data, add/edit/delete records from the browser
 - **🔐 Authentication & Roles** — JWT-based login with role-based access control (Admin, Editor, Viewer)
 - **👥 User Management** — Admin panel for creating/managing users and assigning permissions
@@ -116,7 +118,7 @@ Open your browser and navigate to **http://localhost:3000**
 | View | Description |
 |------|-------------|
 | **Overall Intelligence** | Zone-level crime summary with hotspot analysis, crime type distribution, monthly trends, heatmaps, and more |
-| **Station-wise** | Drill-down into individual police station performance and crime breakdown |
+| **Station-wise** | Drill-down into individual police station performance, or multi-select up to 7 stations for a side-by-side comparison dashboard |
 | **Data** | Connect Excel files, upload data, add/edit/delete records (Editor only) |
 | **Admin** | Manage users and assign permissions (Admin only) |
 
@@ -130,6 +132,9 @@ Open your browser and navigate to **http://localhost:3000**
 - Crime Density Radar (Radar)
 - Investigation vs Closed (Stacked Bar)
 - Month × Station Heatmap (Custom Grid)
+- **Compare:** Crime Types Comparison (Grouped Bar)
+- **Compare:** Monthly Pattern (Multi-line Radar)
+- **Compare:** Crime Trend (Multi-line Area)
 
 ---
 
