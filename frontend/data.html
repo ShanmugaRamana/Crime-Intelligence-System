@@ -284,17 +284,43 @@
                 </div>
                 <div class="form-group">
                     <label data-t="thStation">Police Station</label>
-                    <select id="formStation" required>
-                        <option value="">— Select Station —</option>
-                        <option value="City Chowk">City Chowk</option>
-                        <option value="Kranti Chowk">Kranti Chowk</option>
-                        <option value="Vedant Nagar">Vedant Nagar</option>
-                        <option value="Begumpura">Begumpura</option>
-                        <option value="Chawni">Chawni</option>
-                        <option value="Waluj">Waluj</option>
-                        <option value="MIDC Waluj">MIDC Waluj</option>
-                        <option value="Daulatabad">Daulatabad</option>
-                    </select>
+                    <input type="hidden" id="formStation" required>
+                    <div class="custom-dropdown" id="stationDropdown">
+                        <button type="button" class="dropdown-trigger" id="dropdownTrigger">
+                            <svg class="dropdown-trigger-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16" />
+                            </svg>
+                            <span class="dropdown-trigger-text">— Select Station —</span>
+                            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="dropdownMenu">
+                            <div class="dropdown-search-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                </svg>
+                                <input type="text" class="dropdown-search" id="dropdownSearch"
+                                    placeholder="Search station..." autocomplete="off">
+                            </div>
+                            <ul class="dropdown-options" id="dropdownOptions">
+                                <li data-value="City Chowk">City Chowk</li>
+                                <li data-value="Kranti Chowk">Kranti Chowk</li>
+                                <li data-value="Vedant Nagar">Vedant Nagar</li>
+                                <li data-value="Begumpura">Begumpura</li>
+                                <li data-value="Chawni">Chawni</li>
+                                <li data-value="Waluj">Waluj</li>
+                                <li data-value="MIDC Waluj">MIDC Waluj</li>
+                                <li data-value="Daulatabad">Daulatabad</li>
+                            </ul>
+                            <div class="dropdown-empty" id="dropdownEmpty" style="display:none">No stations found</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label data-t="thCrimeType">Crime Type</label>

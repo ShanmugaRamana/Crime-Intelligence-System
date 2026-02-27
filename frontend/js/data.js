@@ -180,6 +180,106 @@ function bindEvents() {
 
     // Reload
     document.getElementById('btnReload').addEventListener('click', handleReload);
+
+    initStationDropdown();
+}
+
+// ─── Custom Station Dropdown ─────────────────────────────────
+function initStationDropdown() {
+    const trigger = document.getElementById('dropdownTrigger');
+    const menu = document.getElementById('dropdownMenu');
+    const search = document.getElementById('dropdownSearch');
+    const options = document.getElementById('dropdownOptions');
+    const empty = document.getElementById('dropdownEmpty');
+    const hidden = document.getElementById('formStation');
+    if (!trigger || !menu) return;
+
+    function openDropdown() {
+        trigger.classList.add('open');
+        menu.classList.add('open');
+        search.value = '';
+        filterOptions('');
+        setTimeout(() => search.focus(), 50);
+    }
+
+    function closeDropdown() {
+        trigger.classList.remove('open');
+        menu.classList.remove('open');
+    }
+
+    function selectOption(li) {
+        const val = li.dataset.value;
+        hidden.value = val;
+        const textEl = trigger.querySelector('.dropdown-trigger-text');
+        textEl.textContent = val;
+        textEl.classList.remove('placeholder');
+        options.querySelectorAll('li').forEach(l => l.classList.remove('selected'));
+        li.classList.add('selected');
+        closeDropdown();
+    }
+
+    function filterOptions(query) {
+        const q = query.toLowerCase();
+        let visible = 0;
+        options.querySelectorAll('li').forEach(li => {
+            const match = li.textContent.toLowerCase().includes(q);
+            li.classList.toggle('hidden', !match);
+            if (match) visible++;
+        });
+        empty.style.display = visible === 0 ? '' : 'none';
+    }
+
+    trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (menu.classList.contains('open')) closeDropdown();
+        else openDropdown();
+    });
+
+    search.addEventListener('input', () => filterOptions(search.value));
+
+    options.addEventListener('click', (e) => {
+        const li = e.target.closest('li');
+        if (li) selectOption(li);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#stationDropdown')) closeDropdown();
+    });
+
+    // Keyboard navigation
+    search.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDropdown();
+        if (e.key === 'Enter') {
+            const first = options.querySelector('li:not(.hidden)');
+            if (first) selectOption(first);
+        }
+    });
+}
+
+function setStationDropdownValue(value) {
+    const hidden = document.getElementById('formStation');
+    const trigger = document.getElementById('dropdownTrigger');
+    const options = document.getElementById('dropdownOptions');
+    if (!hidden || !trigger) return;
+
+    hidden.value = value || '';
+    const textEl = trigger.querySelector('.dropdown-trigger-text');
+
+    if (value) {
+        textEl.textContent = value;
+        textEl.classList.remove('placeholder');
+    } else {
+        textEl.textContent = '— Select Station —';
+        textEl.classList.add('placeholder');
+    }
+
+    if (options) {
+        options.querySelectorAll('li').forEach(li => {
+            li.classList.toggle('selected', li.dataset.value === value);
+            li.classList.remove('hidden');
+        });
+    }
 }
 
 // ─── Connect ─────────────────────────────────────────────────
@@ -431,7 +531,7 @@ function openModal(editId) {
             document.getElementById('editRecordId').value = editId;
             document.getElementById('formYear').value = row.dataset.year;
             document.getElementById('formMonth').value = row.dataset.month;
-            document.getElementById('formStation').value = row.dataset.station;
+            setStationDropdownValue(row.dataset.station);
             document.getElementById('formCrimeType').value = row.dataset.crimeType;
             document.getElementById('formInvestigation').value = row.dataset.investigation;
             document.getElementById('formClosed').value = row.dataset.closed;
@@ -443,6 +543,7 @@ function openModal(editId) {
         title.textContent = 'Add Record';
         document.getElementById('formYear').value = new Date().getFullYear();
         document.getElementById('formMonth').value = new Date().getMonth() + 1;
+        setStationDropdownValue('');
     }
 
     modal.style.display = 'flex';
