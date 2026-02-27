@@ -22,16 +22,7 @@ const PORT = 3000;
 
 // Helmet — secure HTTP headers
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:"],
-            connectSrc: ["'self'"]
-        }
-    },
+    contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false
 }));
 
@@ -560,7 +551,7 @@ app.use((err, req, res, next) => {
 const uploadsDir = path.join(__dirname, 'data', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     const recordCount = db.getRecordCount();
     console.log('');
     console.log('  ╔══════════════════════════════════════════════╗');
