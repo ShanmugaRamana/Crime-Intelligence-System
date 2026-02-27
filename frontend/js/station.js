@@ -8,6 +8,15 @@ let selectedACPGroup = null;
 let modalChart = null;
 const stationRenderers = {};
 
+// ─── Compare Mode State ─────────────────────────────────────
+let compareMode = false;
+let selectedStations = []; // max 7
+let compareCharts = {};
+const COMPARE_COLORS = [
+    '#6366f1', '#10b981', '#f59e0b', '#ec4899',
+    '#0ea5e9', '#8b5cf6', '#14b8a6'
+];
+
 function destroyStationCharts() {
     Object.values(stationCharts).forEach(c => { if (c && c.destroy) c.destroy(); });
     stationCharts = {};
@@ -85,7 +94,11 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal
 // ─── Main ───────────────────────────────────────────────────
 function renderAllCharts() {
     renderACPSelector();
-    if (selectedStation || selectedACPGroup) renderStationDashboard();
+    if (compareMode) {
+        if (selectedStations.length >= 2) renderComparisonDashboard();
+    } else if (selectedStation || selectedACPGroup) {
+        renderStationDashboard();
+    }
 }
 
 // ─── Station Selector — DCP Zone wrapper + ACP boxes ─────────
@@ -136,13 +149,19 @@ function renderACPSelector() {
         acpStationNames.forEach((station) => {
             const count = grouped[station] ? grouped[station].length : 0;
             const card = document.createElement('div');
-            card.className = 'station-card' + (selectedStation === station ? ' active' : '');
+            card.className = 'station-card';
+            if (compareMode) {
+                const idx = selectedStations.indexOf(station);
+                if (idx >= 0) card.classList.add('compare-selected', 'compare-' + (idx + 1));
+            } else if (selectedStation === station) {
+                card.classList.add('active');
+            }
             card.innerHTML = `
                 <div class="station-card-name">${station}</div>
                 <div class="station-card-count">${count}</div>
                 <div class="station-card-label">${t('cases')}</div>
             `;
-            card.addEventListener('click', () => selectStation(station));
+            card.addEventListener('click', () => compareMode ? toggleStationForCompare(station) : selectStation(station));
             stationsRow.appendChild(card);
         });
 
@@ -182,13 +201,19 @@ function renderACPSelector() {
         unknownStations.forEach(station => {
             const count = grouped[station] ? grouped[station].length : 0;
             const card = document.createElement('div');
-            card.className = 'station-card' + (selectedStation === station ? ' active' : '');
+            card.className = 'station-card';
+            if (compareMode) {
+                const idx = selectedStations.indexOf(station);
+                if (idx >= 0) card.classList.add('compare-selected', 'compare-' + (idx + 1));
+            } else if (selectedStation === station) {
+                card.classList.add('active');
+            }
             card.innerHTML = `
                 <div class="station-card-name">${station}</div>
                 <div class="station-card-count">${count}</div>
                 <div class="station-card-label">${t('cases')}</div>
             `;
-            card.addEventListener('click', () => selectStation(station));
+            card.addEventListener('click', () => compareMode ? toggleStationForCompare(station) : selectStation(station));
             stationsRow.appendChild(card);
         });
 
@@ -214,6 +239,7 @@ function renderACPSelector() {
 
 // ─── Select single station ─────────────────────────────────
 function selectStation(station) {
+    if (compareMode) return; // ignore in compare mode
     if (selectedStation === station) {
         selectedStation = null;
         document.getElementById('stationContent').style.display = 'none';
@@ -224,12 +250,14 @@ function selectStation(station) {
     selectedStation = station;
     selectedACPGroup = null;
     document.getElementById('stationContent').style.display = 'block';
+    document.getElementById('compareContent').style.display = 'none';
     renderACPSelector();
     renderStationDashboard();
 }
 
 // ─── Select ACP group (combined view) ──────────────────────
 function selectACPGroup(acpGroup) {
+    if (compareMode) return; // ignore in compare mode
     if (selectedACPGroup === acpGroup.acp) {
         selectedACPGroup = null;
         document.getElementById('stationContent').style.display = 'none';
@@ -240,6 +268,7 @@ function selectACPGroup(acpGroup) {
     selectedACPGroup = acpGroup.acp;
     selectedStation = null;
     document.getElementById('stationContent').style.display = 'block';
+    document.getElementById('compareContent').style.display = 'none';
     renderACPSelector();
     renderStationDashboard();
 }
@@ -585,4 +614,277 @@ function renderStationTable(records) {
     container.innerHTML = html;
 }
 
-initApp(() => { renderACPSelector(); });
+initApp(() => {
+    renderACPSelector();
+
+    // Compare mode toggle
+    const btnCompare = document.getElementById('btnCompare');
+    if (btnCompare) btnCompare.addEventListener('click', toggleCompareMode);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// COMPARE MODE
+// ═══════════════════════════════════════════════════════════════
+
+function toggleCompareMode() {
+    compareMode = !compareMode;
+    const btn = document.getElementById('btnCompare');
+    const hint = document.getElementById('compareHint');
+    if (compareMode) {
+        btn.classList.add('active');
+        hint.style.display = '';
+        // Reset single-select
+        selectedStation = null;
+        selectedACPGroup = null;
+        selectedStations = [];
+        document.getElementById('stationContent').style.display = 'none';
+        document.getElementById('compareContent').style.display = 'none';
+        destroyStationCharts();
+        destroyCompareCharts();
+    } else {
+        btn.classList.remove('active');
+        hint.style.display = 'none';
+        selectedStations = [];
+        document.getElementById('compareContent').style.display = 'none';
+        destroyCompareCharts();
+    }
+    renderACPSelector();
+}
+
+function toggleStationForCompare(station) {
+    const idx = selectedStations.indexOf(station);
+    if (idx >= 0) {
+        selectedStations.splice(idx, 1);
+    } else {
+        if (selectedStations.length >= 7) return; // max 7
+        selectedStations.push(station);
+    }
+    renderACPSelector();
+    if (selectedStations.length >= 2) {
+        document.getElementById('compareContent').style.display = 'block';
+        renderComparisonDashboard();
+        // Re-observe for scroll-reveal
+        requestAnimationFrame(() => {
+            document.getElementById('compareContent').querySelectorAll('.reveal:not(.revealed), .reveal-scale:not(.revealed)').forEach(el => {
+                if (window._revealObserver) window._revealObserver.observe(el);
+                else el.classList.add('revealed');
+            });
+        });
+    } else {
+        document.getElementById('compareContent').style.display = 'none';
+        destroyCompareCharts();
+    }
+}
+
+function destroyCompareCharts() {
+    Object.values(compareCharts).forEach(c => { if (c && c.destroy) c.destroy(); });
+    compareCharts = {};
+}
+
+// ─── Comparison Dashboard ───────────────────────────────────
+function renderComparisonDashboard() {
+    destroyCompareCharts();
+
+    const stationsData = selectedStations.map((station, i) => {
+        const records = filteredRecords.filter(r => r.policeStation === station);
+        const total = records.length;
+        const inv = records.reduce((s, r) => s + r.underInvestigation, 0);
+        const closed = records.reduce((s, r) => s + r.closed, 0);
+        const rate = (inv + closed) > 0 ? ((closed / (inv + closed)) * 100).toFixed(1) : '0.0';
+        return { station, records, total, inv, closed, rate, color: COMPARE_COLORS[i] };
+    });
+
+    // Side-by-side KPIs
+    renderCompareKPIs(stationsData);
+    // Charts
+    renderCompareCrimeTypes(stationsData);
+    renderCompareRadar(stationsData);
+    renderCompareTrend(stationsData);
+    renderCompareTable(stationsData);
+}
+
+// ─── Compare KPIs ───────────────────────────────────────────
+function renderCompareKPIs(stationsData) {
+    const container = document.getElementById('compareKPIs');
+    if (!container) return;
+    let html = '<div class="compare-kpi-grid">';
+    stationsData.forEach(sd => {
+        html += `
+        <div class="compare-kpi-column" style="--compare-color: ${sd.color}">
+            <div class="compare-kpi-header">${sd.station}</div>
+            <div class="compare-kpi-row">
+                <div class="compare-kpi-item">
+                    <div class="compare-kpi-label">${t('totalCrimes')}</div>
+                    <div class="compare-kpi-value">${sd.total}</div>
+                </div>
+                <div class="compare-kpi-item">
+                    <div class="compare-kpi-label">${t('underInvestigation')}</div>
+                    <div class="compare-kpi-value">${sd.inv}</div>
+                </div>
+                <div class="compare-kpi-item">
+                    <div class="compare-kpi-label">${t('closedCases')}</div>
+                    <div class="compare-kpi-value">${sd.closed}</div>
+                </div>
+                <div class="compare-kpi-item">
+                    <div class="compare-kpi-label">${t('closureRate')}</div>
+                    <div class="compare-kpi-value">${sd.rate}%</div>
+                </div>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ─── Compare Crime Types — Grouped Bar ──────────────────────
+function renderCompareCrimeTypes(stationsData) {
+    const allCrimeTypes = new Set();
+    stationsData.forEach(sd => sd.records.forEach(r => allCrimeTypes.add(r.crimeType)));
+    const crimeTypes = [...allCrimeTypes].sort();
+    const labels = crimeTypes.map(ct => typeof translateCrimeType === 'function' ? translateCrimeType(ct) : ct);
+
+    const datasets = stationsData.map(sd => ({
+        label: sd.station,
+        data: crimeTypes.map(ct => sd.records.filter(r => r.crimeType === ct).length),
+        backgroundColor: sd.color + 'cc',
+        borderColor: sd.color,
+        borderWidth: 1,
+        borderRadius: 4,
+        barPercentage: 0.9,
+        categoryPercentage: 0.9
+    }));
+
+    // Calculate dynamic height to ensure bars are thick even with 7 stations
+    // Height per category = number of stations * 16px (bar thickness) + 12px padding
+    const heightPerCategory = stationsData.length * 16 + 12;
+    const chartHeight = Math.max(400, labels.length * heightPerCategory);
+
+    const wrapper = document.getElementById('chartCompareCrimes').parentElement;
+    wrapper.style.height = `${chartHeight}px`;
+
+    compareCharts.crimes = new Chart(document.getElementById('chartCompareCrimes'), {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            layout: { padding: { right: 20 } },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#1f2937', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' } }
+            },
+            scales: {
+                x: { beginAtZero: true, grid: { color: GRID }, ticks: { precision: 0 } },
+                y: { grid: { display: false }, ticks: { color: '#1f2937', font: { size: 11, weight: '500' } } }
+            }
+        }
+    });
+}
+
+// ─── Compare Radar ──────────────────────────────────────────
+function renderCompareRadar(stationsData) {
+    const labels = [];
+    for (let m = 1; m <= 12; m++) labels.push(getMonthName(m));
+
+    const datasets = stationsData.map(sd => {
+        const data = [];
+        for (let m = 1; m <= 12; m++) {
+            data.push(sd.records.filter(r => r.month === m).length);
+        }
+        return {
+            label: sd.station,
+            data,
+            borderColor: sd.color,
+            backgroundColor: sd.color + '20',
+            fill: true,
+            pointBackgroundColor: sd.color,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 1.5,
+            pointRadius: 3,
+            borderWidth: 2.5
+        };
+    });
+
+    compareCharts.radar = new Chart(document.getElementById('chartCompareRadar'), {
+        type: 'radar',
+        data: { labels, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#1f2937', font: { size: 10 }, boxWidth: 8, padding: 8, usePointStyle: true, pointStyle: 'circle' } }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    angleLines: { color: '#e5e7eb' },
+                    grid: { color: '#e5e7eb' },
+                    pointLabels: { color: '#374151', font: { size: 10, weight: '500' } },
+                    ticks: { precision: 0, backdropColor: 'transparent', color: '#9ca3af', font: { size: 9 } }
+                }
+            }
+        }
+    });
+}
+
+// ─── Compare Trend — Multi-line ─────────────────────────────
+function renderCompareTrend(stationsData) {
+    const labels = [];
+    for (let m = 1; m <= 12; m++) labels.push(getMonthName(m).substring(0, 3));
+
+    const datasets = stationsData.map(sd => {
+        const data = [];
+        for (let m = 1; m <= 12; m++) {
+            data.push(sd.records.filter(r => r.month === m).length);
+        }
+        return {
+            label: sd.station,
+            data,
+            borderColor: sd.color,
+            backgroundColor: sd.color + '20',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: sd.color,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            borderWidth: 2.5
+        };
+    });
+
+    compareCharts.trend = new Chart(document.getElementById('chartCompareTrend'), {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#1f2937', font: { size: 10 }, boxWidth: 8, padding: 8, usePointStyle: true, pointStyle: 'circle' } }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#374151', font: { size: 11 }, maxRotation: 0 } },
+                y: { beginAtZero: true, grid: { color: GRID }, ticks: { precision: 0 } }
+            },
+            interaction: { mode: 'index', intersect: false }
+        }
+    });
+}
+
+// ─── Compare Table ──────────────────────────────────────────
+function renderCompareTable(stationsData) {
+    const container = document.getElementById('compareTableContainer');
+    if (!container) return;
+
+    let html = '<table class="data-table"><thead><tr>';
+    html += `<th>${t('tableStation')}</th><th>${t('totalCrimes')}</th><th>${t('underInvestigation')}</th><th>${t('closedCases')}</th><th>${t('closureRate')}</th>`;
+    html += '</tr></thead><tbody>';
+
+    stationsData.forEach(sd => {
+        html += `<tr>
+            <td><span class="compare-dot" style="background:${sd.color}"></span>${sd.station}</td>
+            <td><strong>${sd.total}</strong></td>
+            <td>${sd.inv}</td>
+            <td>${sd.closed}</td>
+            <td>${sd.rate}%</td>
+        </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}

@@ -151,7 +151,31 @@ const TRANSLATIONS = {
         mr: 'प्रकारानुसार गुन्हे ट्रेंड'
     },
 
-    // ─── Table Headers ──────────────────────────────────────
+    // ─── Station Comparison ─────────────────────────────────
+    compareStations: {
+        en: 'Compare Stations',
+        mr: 'ठाणे तुलना करा'
+    },
+    selectUpTo3: {
+        en: 'Select 2–7 stations to compare',
+        mr: 'तुलना करण्यासाठी 2–7 ठाणे निवडा'
+    },
+    compareCrimeTypes: {
+        en: 'Crime Types Comparison',
+        mr: 'गुन्हे प्रकार तुलना'
+    },
+    compareRadar: {
+        en: 'Monthly Pattern Comparison',
+        mr: 'मासिक नमुना तुलना'
+    },
+    compareTrend: {
+        en: 'Crime Trend Comparison',
+        mr: 'गुन्हे ट्रेंड तुलना'
+    },
+    compareTable: {
+        en: 'Comparison Table',
+        mr: 'तुलना सारणी'
+    },
     tableYear: {
         en: 'Year',
         mr: 'वर्ष'

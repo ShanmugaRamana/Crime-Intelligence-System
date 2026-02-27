@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Station-wise — Zone 1 Crime Intelligence System</title>
     <meta name="description" content="Station-wise crime analysis — Aurangabad City Police">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=4">
 </head>
 
 <body>
@@ -132,7 +135,26 @@
         </div>
 
         <!-- ACP Group Cards -->
-        <div class="section-label reveal" style="--d:0.08s" data-t="selectStation">Select a Police Station</div>
+        <div class="station-selector-header reveal" style="--d:0.08s">
+            <span class="section-label" data-t="selectStation">Select a Police Station</span>
+            <button class="btn-compare" id="btnCompare">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="12" height="12" rx="2" ry="2" />
+                    <rect x="9" y="9" width="12" height="12" rx="2" ry="2" />
+                </svg>
+                <span data-t="compareStations">Compare Stations</span>
+            </button>
+        </div>
+        <div class="compare-hint" id="compareHint" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span data-t="selectUpTo3">Select 2–3 stations to compare</span>
+        </div>
         <div class="acp-selector" id="acpSelector"></div>
 
         <!-- Station content (shown after selection) -->
@@ -211,14 +233,37 @@
                 </div>
             </div>
         </div>
+
+        <!-- Comparison content (shown in compare mode) -->
+        <div id="compareContent" style="display:none;">
+            <div id="compareKPIs"></div>
+            <div class="chart-grid">
+                <div class="chart-card span-2 reveal" style="--d:0.05s">
+                    <div class="chart-title" data-t="compareCrimeTypes">Crime Types Comparison</div>
+                    <div class="chart-wrapper tall"><canvas id="chartCompareCrimes"></canvas></div>
+                </div>
+                <div class="chart-card reveal" style="--d:0.08s">
+                    <div class="chart-title" data-t="compareRadar">Monthly Pattern Comparison</div>
+                    <div class="chart-wrapper"><canvas id="chartCompareRadar"></canvas></div>
+                </div>
+                <div class="chart-card reveal" style="--d:0.12s">
+                    <div class="chart-title" data-t="compareTrend">Crime Trend Comparison</div>
+                    <div class="chart-wrapper"><canvas id="chartCompareTrend"></canvas></div>
+                </div>
+                <div class="chart-card full-width reveal" style="--d:0.05s">
+                    <div class="chart-title" data-t="compareTable">Comparison Table</div>
+                    <div class="data-table-wrapper" id="compareTableContainer"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
     <script src="/libs/chart.min.js"></script>
-    <script src="/js/translations.js?v=2"></script>
-    <script src="/js/app.js?v=2"></script>
-    <script src="/js/station.js?v=2"></script>
+    <script src="/js/translations.js?v=5"></script>
+    <script src="/js/app.js?v=5"></script>
+    <script src="/js/station.js?v=5"></script>
 
     <!-- Scroll-reveal IntersectionObserver -->
     <script>

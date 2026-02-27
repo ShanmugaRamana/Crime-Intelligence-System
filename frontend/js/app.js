@@ -54,15 +54,23 @@ function getStationACPGroup(stationName) {
     ) || null;
 }
 
-// ─── Auth Check ─────────────────────────────────────────────
+// ─── Auth Check (cached in sessionStorage) ─────────────────
 async function checkAuth() {
     try {
-        const res = await fetch('/api/me', { credentials: 'same-origin' });
-        if (!res.ok) {
-            window.location.href = '/login.html';
-            return false;
+        // Try sessionStorage cache first (skip network on tab switch)
+        const cached = sessionStorage.getItem('z1cis_user');
+        let user;
+        if (cached) {
+            user = JSON.parse(cached);
+        } else {
+            const res = await fetch('/api/me', { credentials: 'same-origin' });
+            if (!res.ok) {
+                window.location.href = '/login.html';
+                return false;
+            }
+            user = await res.json();
+            sessionStorage.setItem('z1cis_user', JSON.stringify(user));
         }
-        const user = await res.json();
         window.userRole = user.role;
         window.currentUser = user.username;
 
@@ -92,21 +100,36 @@ async function checkAuth() {
 }
 
 function handleLogout() {
+    // Clear cached auth so next login is fresh
+    sessionStorage.removeItem('z1cis_user');
+    sessionStorage.removeItem('z1cis_data');
     // Redirect INSTANTLY — never wait for server
     window.location.href = '/login.html';
     // Fire cookie-clearing POST in background (rate limiter exempts logout)
     fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => { });
 }
 
-// ─── Data Fetching ──────────────────────────────────────────
+// ─── Data Fetching (cached in sessionStorage, 30s TTL) ──────
 async function fetchData() {
     try {
+        // Check sessionStorage cache (30s TTL)
+        const cached = sessionStorage.getItem('z1cis_data');
+        if (cached) {
+            const { data, ts } = JSON.parse(cached);
+            if (Date.now() - ts < 30000) {
+                allData = data;
+                applyFilters();
+                return allData;
+            }
+        }
         const res = await fetch('/api/data', { credentials: 'same-origin' });
         if (res.status === 401) {
             window.location.href = '/login.html';
             return null;
         }
         allData = await res.json();
+        // Cache for next tab switch
+        try { sessionStorage.setItem('z1cis_data', JSON.stringify({ data: allData, ts: Date.now() })); } catch (e) { /* quota */ }
         applyFilters();
         return allData;
     } catch (err) {
@@ -341,6 +364,12 @@ async function initApp(arg) {
     // Restore language preference
     const savedLang = localStorage.getItem('z1cis_lang');
     if (savedLang) currentLang = savedLang;
+
+    // Fast-reveal: if navigating within app, skip animation delays
+    const ref = document.referrer;
+    if (ref && ref.startsWith(window.location.origin)) {
+        document.documentElement.classList.add('fast-reveal');
+    }
 
     // Check authentication first
     const isAuthed = await checkAuth();

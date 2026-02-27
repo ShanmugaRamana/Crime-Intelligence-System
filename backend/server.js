@@ -134,11 +134,13 @@ app.get('/login.html', (req, res) => {
 });
 
 // Serve static assets (CSS, JS, images, fonts, libs) without auth
-app.use('/css', express.static(path.join(__dirname, '..', 'frontend', 'css')));
-app.use('/js', express.static(path.join(__dirname, '..', 'frontend', 'js')));
-app.use('/img', express.static(path.join(__dirname, '..', 'frontend', 'img')));
-app.use('/fonts', express.static(path.join(__dirname, '..', 'frontend', 'fonts')));
-app.use('/libs', express.static(path.join(__dirname, '..', 'frontend', 'libs')));
+// Cache for 24h — browser reuses from disk cache on tab switches
+const staticOpts = { maxAge: '1d', etag: true, lastModified: true };
+app.use('/css', express.static(path.join(__dirname, '..', 'frontend', 'css'), staticOpts));
+app.use('/js', express.static(path.join(__dirname, '..', 'frontend', 'js'), staticOpts));
+app.use('/img', express.static(path.join(__dirname, '..', 'frontend', 'img'), staticOpts));
+app.use('/fonts', express.static(path.join(__dirname, '..', 'frontend', 'fonts'), staticOpts));
+app.use('/libs', express.static(path.join(__dirname, '..', 'frontend', 'libs'), staticOpts));
 
 // Protected HTML pages — require auth, redirect to login if not authenticated
 app.get('/', (req, res, next) => {
