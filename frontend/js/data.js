@@ -6,16 +6,27 @@ let isConnected = false;
 
 // ─── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Always bind events and check connection first
-    bindEvents();
-    checkConnection();
+    // Run initApp first to authenticate and set up nav/user display,
+    // then run page-specific logic in the callback
+    initApp({
+        onReady: () => {
+            // Redirect viewers away from data page
+            if (window.userRole === 'viewer') {
+                window.location.href = '/index.html';
+                return;
+            }
+            bindEvents();
+            checkConnection();
 
-    // Then check if viewer — redirect after a short delay to let auth resolve
-    setTimeout(() => {
-        if (window.userRole === 'viewer') {
-            window.location.href = '/index.html';
+            // Listen for SSE data updates to refresh this page
+            window.addEventListener('z1cis-data-updated', () => {
+                if (isConnected) {
+                    loadRecords();
+                    loadFilterOptions();
+                }
+            });
         }
-    }, 500);
+    });
 });
 
 // ─── Check Connection Status ─────────────────────────────────
@@ -605,11 +616,3 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// ─── SSE: Real-time updates ──────────────────────────────────
-const evtSource = new EventSource('/api/events');
-evtSource.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    if (data.type === 'data-updated') {
-        checkConnection();
-    }
-};

@@ -5,46 +5,51 @@
 let allUsers = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadUsers();
+    // Run initApp first to authenticate and set up nav/user display,
+    // then run page-specific logic in the callback
+    initApp({
+        onReady: () => {
+            // Redirect non-admin users away from admin page
+            if (window.userRole && window.userRole !== 'admin') {
+                window.location.href = '/index.html';
+                return;
+            }
 
-    document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
+            loadUsers();
 
-    // ─── Event Delegation for table actions ──────────────────
-    document.getElementById('usersTableBody').addEventListener('click', (e) => {
-        const deleteBtn = e.target.closest('.btn-delete-user');
-        if (deleteBtn) {
-            const userId = parseInt(deleteBtn.dataset.id);
-            const username = deleteBtn.dataset.name;
-            confirmDeleteUser(userId, username);
+            document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
+
+            // ─── Event Delegation for table actions ──────────────────
+            document.getElementById('usersTableBody').addEventListener('click', (e) => {
+                const deleteBtn = e.target.closest('.btn-delete-user');
+                if (deleteBtn) {
+                    const userId = parseInt(deleteBtn.dataset.id);
+                    const username = deleteBtn.dataset.name;
+                    confirmDeleteUser(userId, username);
+                }
+            });
+
+            document.getElementById('usersTableBody').addEventListener('change', (e) => {
+                if (e.target.classList.contains('role-select')) {
+                    const userId = parseInt(e.target.dataset.id);
+                    const newRole = e.target.value;
+                    changeRole(userId, newRole);
+                }
+            });
+
+            // ─── Confirm Modal listeners (once) ─────────────────────
+            const overlay = document.getElementById('confirmOverlay');
+            document.getElementById('confirmCancel').addEventListener('click', closeConfirmModal);
+            document.getElementById('confirmOk').addEventListener('click', () => {
+                const cb = _confirmCallback;
+                closeConfirmModal();
+                if (cb) cb();
+            });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeConfirmModal();
+            });
         }
     });
-
-    document.getElementById('usersTableBody').addEventListener('change', (e) => {
-        if (e.target.classList.contains('role-select')) {
-            const userId = parseInt(e.target.dataset.id);
-            const newRole = e.target.value;
-            changeRole(userId, newRole);
-        }
-    });
-
-    // ─── Confirm Modal listeners (once) ─────────────────────
-    const overlay = document.getElementById('confirmOverlay');
-    document.getElementById('confirmCancel').addEventListener('click', closeConfirmModal);
-    document.getElementById('confirmOk').addEventListener('click', () => {
-        const cb = _confirmCallback;
-        closeConfirmModal();
-        if (cb) cb();
-    });
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeConfirmModal();
-    });
-
-    // Redirect non-admin users after auth resolves
-    setTimeout(() => {
-        if (window.userRole && window.userRole !== 'admin') {
-            window.location.href = '/index.html';
-        }
-    }, 500);
 });
 
 // ─── Load Users ──────────────────────────────────────────────

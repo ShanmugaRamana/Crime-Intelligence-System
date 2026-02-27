@@ -55,7 +55,7 @@
                         <circle cx="9" cy="7" r="4" />
                         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
                     </svg>
-                    <span>Admin</span>
+                    <span data-t="navAdmin">Admin</span>
                 </a>
             </div>
             <div class="nav-right">
@@ -177,7 +177,7 @@
                             <line x1="18" y1="6" x2="6" y2="18" />
                             <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
-                        <span>Disconnect</span>
+                        <span data-t="disconnect">Disconnect</span>
                     </button>
                 </div>
             </section>
@@ -284,7 +284,17 @@
                 </div>
                 <div class="form-group">
                     <label data-t="thStation">Police Station</label>
-                    <input type="text" id="formStation" required>
+                    <select id="formStation" required>
+                        <option value="">— Select Station —</option>
+                        <option value="City Chowk">City Chowk</option>
+                        <option value="Kranti Chowk">Kranti Chowk</option>
+                        <option value="Vedant Nagar">Vedant Nagar</option>
+                        <option value="Begumpura">Begumpura</option>
+                        <option value="Chawni">Chawni</option>
+                        <option value="Waluj">Waluj</option>
+                        <option value="MIDC Waluj">MIDC Waluj</option>
+                        <option value="Daulatabad">Daulatabad</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label data-t="thCrimeType">Crime Type</label>
@@ -331,9 +341,9 @@
         </div>
     </div>
 
-    <script src="/js/translations.js"></script>
-    <script src="/js/app.js"></script>
-    <script src="/js/data.js"></script>
+    <script src="/js/translations.js?v=2"></script>
+    <script src="/js/app.js?v=2"></script>
+    <script src="/js/data.js?v=2"></script>
 
 </body>
 

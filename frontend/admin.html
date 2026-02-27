@@ -55,7 +55,7 @@
                         <circle cx="9" cy="7" r="4" />
                         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
                     </svg>
-                    <span>Admin</span>
+                    <span data-t="navAdmin">Admin</span>
                 </a>
             </div>
             <div class="nav-right">
@@ -85,7 +85,7 @@
                             <polyline points="16 17 21 12 16 7" />
                             <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
-                        <span>Logout</span>
+                        <span data-t="logout">Logout</span>
                     </button>
                 </div>
             </div>
@@ -162,10 +162,10 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Username</th>
-                            <th>Permission</th>
-                            <th>Created</th>
-                            <th>Actions</th>
+                            <th data-t="username">Username</th>
+                            <th data-t="userPermission">Permission</th>
+                            <th data-t="userCreated">Created</th>
+                            <th data-t="userActions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
@@ -203,9 +203,9 @@
     <!-- Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
-    <script src="/js/translations.js"></script>
-    <script src="/js/app.js"></script>
-    <script src="/js/admin.js"></script>
+    <script src="/js/translations.js?v=2"></script>
+    <script src="/js/app.js?v=2"></script>
+    <script src="/js/admin.js?v=2"></script>
 
 </body>
 

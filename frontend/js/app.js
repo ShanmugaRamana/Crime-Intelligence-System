@@ -92,9 +92,9 @@ async function checkAuth() {
 }
 
 function handleLogout() {
-    // Redirect instantly — don't wait for server response
+    // Redirect INSTANTLY — never wait for server
     window.location.href = '/login.html';
-    // Fire cookie-clearing POST in background (best-effort)
+    // Fire cookie-clearing POST in background (rate limiter exempts logout)
     fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => { });
 }
 
@@ -123,6 +123,8 @@ function connectSSE() {
         const msg = JSON.parse(event.data);
         if (msg.type === 'data-updated') {
             console.log('Data updated! Refreshing...');
+            // Dispatch custom event for page-specific handlers (e.g. data.js)
+            window.dispatchEvent(new CustomEvent('z1cis-data-updated'));
             fetchData().then(() => {
                 showToast();
             });
@@ -159,6 +161,7 @@ function toggleLanguage() {
     currentLang = currentLang === 'en' ? 'mr' : 'en';
     localStorage.setItem('z1cis_lang', currentLang);
     updateAllLabels();
+    populateFilters();
     if (typeof renderAllCharts === 'function') renderAllCharts();
 }
 
@@ -319,7 +322,22 @@ function toggleSidebar() {
 }
 
 // ─── Init ───────────────────────────────────────────────────
-async function initApp(onReady) {
+// Usage:
+//   initApp(callback)  — callback fires after data loads (for chart pages)
+//   initApp({ onReady, onDataReady }) — onReady fires immediately after auth,
+//                                       onDataReady fires after data loads
+async function initApp(arg) {
+    let onReady = null;
+    let onDataReady = null;
+
+    if (typeof arg === 'function') {
+        // Backward compatible: single function = fires after data
+        onDataReady = arg;
+    } else if (arg && typeof arg === 'object') {
+        onReady = arg.onReady || null;
+        onDataReady = arg.onDataReady || null;
+    }
+
     // Restore language preference
     const savedLang = localStorage.getItem('z1cis_lang');
     if (savedLang) currentLang = savedLang;
@@ -328,7 +346,7 @@ async function initApp(onReady) {
     const isAuthed = await checkAuth();
     if (!isAuthed) return;
 
-    // Bind filter events
+    // Bind common UI events IMMEDIATELY
     document.querySelectorAll('.filter-bar select').forEach(sel => {
         sel.addEventListener('change', applyFilters);
     });
@@ -345,14 +363,25 @@ async function initApp(onReady) {
     const printBtn = document.getElementById('btnPrint');
     if (printBtn) printBtn.addEventListener('click', () => window.print());
 
-    // Bind logout button
+    // Bind logout button IMMEDIATELY — must always work
     const logoutBtn = document.getElementById('btnLogout');
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
 
-    // Fetch data and start SSE
-    fetchData().then(() => {
-        updateAllLabels();
-        if (onReady) onReady();
+    // Update labels for translations
+    updateAllLabels();
+
+    // Fire onReady IMMEDIATELY (for admin/data pages)
+    if (onReady) onReady();
+
+    // Fetch data + SSE for pages with charts
+    const hasCharts = document.querySelector('.filter-bar') || document.querySelector('.chart-grid');
+    if (hasCharts) {
+        fetchData().then(() => {
+            updateAllLabels();
+            if (onDataReady) onDataReady();
+            connectSSE();
+        });
+    } else {
         connectSSE();
-    });
+    }
 }

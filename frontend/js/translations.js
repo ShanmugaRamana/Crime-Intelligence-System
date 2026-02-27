@@ -26,6 +26,10 @@ const TRANSLATIONS = {
         en: 'Data',
         mr: 'डेटा'
     },
+    navAdmin: {
+        en: 'Admin',
+        mr: 'व्यवस्थापन'
+    },
 
     // ─── KPI Labels ─────────────────────────────────────────
     totalCrimes: {
@@ -229,6 +233,148 @@ const TRANSLATIONS = {
     readOnlyAccess: {
         en: 'Read-only access — Contact admin2 for edit permissions',
         mr: 'फक्त वाचन — संपादन परवानगीसाठी admin2 शी संपर्क साधा'
+    },
+
+    // ─── Data Page ──────────────────────────────────────────
+    dataSource: {
+        en: 'Data Source',
+        mr: 'डेटा स्रोत'
+    },
+    totalRecords: {
+        en: 'Records',
+        mr: 'नोंदी'
+    },
+    uploadExcel: {
+        en: 'Upload Excel',
+        mr: 'एक्सेल अपलोड करा'
+    },
+    exportExcel: {
+        en: 'Export Excel',
+        mr: 'एक्सेल निर्यात करा'
+    },
+    reloadData: {
+        en: 'Reload',
+        mr: 'पुन्हा लोड करा'
+    },
+    disconnect: {
+        en: 'Disconnect',
+        mr: 'डिस्कनेक्ट'
+    },
+    addRecord: {
+        en: 'Add Record',
+        mr: 'नोंद जोडा'
+    },
+    saveRecord: {
+        en: 'Save Record',
+        mr: 'नोंद जतन करा'
+    },
+    cancel: {
+        en: 'Cancel',
+        mr: 'रद्द करा'
+    },
+    searchRecords: {
+        en: 'Search records...',
+        mr: 'नोंदी शोधा...'
+    },
+    thYear: {
+        en: 'Year',
+        mr: 'वर्ष'
+    },
+    thMonth: {
+        en: 'Month',
+        mr: 'महिना'
+    },
+    thStation: {
+        en: 'Police Station',
+        mr: 'पोलीस ठाणे'
+    },
+    thCrimeType: {
+        en: 'Crime Type',
+        mr: 'गुन्ह्याचा प्रकार'
+    },
+    thInvestigation: {
+        en: 'Under Investigation',
+        mr: 'तपासात'
+    },
+    thClosed: {
+        en: 'Closed',
+        mr: 'बंद'
+    },
+
+    // ─── Admin Page ─────────────────────────────────────────
+    userManagement: {
+        en: 'User Management',
+        mr: 'वापरकर्ता व्यवस्थापन'
+    },
+    addNewUser: {
+        en: 'Add New User',
+        mr: 'नवीन वापरकर्ता जोडा'
+    },
+    userPermission: {
+        en: 'Permission',
+        mr: 'परवानगी'
+    },
+    userActions: {
+        en: 'Actions',
+        mr: 'कृती'
+    },
+    userCreated: {
+        en: 'Created',
+        mr: 'तयार केले'
+    },
+    readOnly: {
+        en: 'Read Only',
+        mr: 'फक्त वाचन'
+    },
+    readWrite: {
+        en: 'Read & Write',
+        mr: 'वाचन आणि लेखन'
+    },
+    addUser: {
+        en: 'Add User',
+        mr: 'वापरकर्ता जोडा'
+    },
+    deleteBtn: {
+        en: 'Delete',
+        mr: 'हटवा'
+    },
+    protectedUser: {
+        en: 'Protected',
+        mr: 'संरक्षित'
+    },
+
+    // ─── Station Names ──────────────────────────────────────
+    stationCityChowk: {
+        en: 'City Chowk',
+        mr: 'सिटी चौक'
+    },
+    stationKrantiChowk: {
+        en: 'Kranti Chowk',
+        mr: 'क्रांती चौक'
+    },
+    stationVedantNagar: {
+        en: 'Vedant Nagar',
+        mr: 'वेदांत नगर'
+    },
+    stationBegumpura: {
+        en: 'Begumpura',
+        mr: 'बेगमपुरा'
+    },
+    stationChawni: {
+        en: 'Chawni',
+        mr: 'छावणी'
+    },
+    stationWaluj: {
+        en: 'Waluj',
+        mr: 'वाळूज'
+    },
+    stationMIDCWaluj: {
+        en: 'MIDC Waluj',
+        mr: 'एमआयडीसी वाळूज'
+    },
+    stationDaulatabad: {
+        en: 'Daulatabad',
+        mr: 'दौलताबाद'
     }
 };
 

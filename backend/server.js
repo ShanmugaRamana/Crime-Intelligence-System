@@ -41,13 +41,15 @@ app.use(cors({ origin: true, credentials: true }));
 // Cookie parser
 app.use(cookieParser());
 
-// General rate limiter — 100 requests per 15 min per IP
+// General rate limiter — 500 requests per 15 min per IP
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 500,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: 'Too many requests, please try again later.' }
+    message: { error: 'Too many requests, please try again later.' },
+    // Exempt logout so it always works
+    skip: (req) => req.path === '/api/logout'
 });
 app.use('/api/', generalLimiter);
 
