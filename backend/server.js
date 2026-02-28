@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const chokidar = require('chokidar');
 const path = require('path');
 const fs = require('fs');
@@ -20,14 +21,17 @@ const PORT = 3000;
 //  Security Middleware
 // ═══════════════════════════════════════════════════════════════
 
+// Gzip/Brotli compression — reduces transfer sizes by 70-80%
+app.use(compression({ level: 6, threshold: 512 }));
+
 // Helmet — secure HTTP headers
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            fontSrc: ["'self'"],
             imgSrc: ["'self'", "data:"],
             connectSrc: ["'self'"]
         }
@@ -104,6 +108,9 @@ function saveSettings() {
 
 // SSE clients
 let sseClients = [];
+
+// In-memory API data cache — avoids recomputing for every client
+let dataCache = { data: null, ts: 0 };
 
 // ═══════════════════════════════════════════════════════════════
 //  Initialize
@@ -289,7 +296,13 @@ app.delete('/api/users/:id', requireAuth, requireAdmin, (req, res) => {
 // Get Data Summary (for dashboards)
 app.get('/api/data', requireAuth, (req, res) => {
     try {
+        // Serve from cache if fresh (5s TTL) — avoids recomputing for every client
+        const now = Date.now();
+        if (dataCache.data && (now - dataCache.ts) < 5000) {
+            return res.json(dataCache.data);
+        }
         const data = db.getDataSummary();
+        dataCache = { data, ts: now };
         res.json(data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -495,6 +508,8 @@ app.get('/api/events', requireAuth, (req, res) => {
 });
 
 function notifyClients() {
+    // Invalidate API cache on data changes
+    dataCache = { data: null, ts: 0 };
     const message = JSON.stringify({ type: 'data-updated', timestamp: new Date().toISOString() });
     sseClients.forEach(client => {
         client.write(`data: ${message}\n\n`);
@@ -560,14 +575,28 @@ app.use((err, req, res, next) => {
 const uploadsDir = path.join(__dirname, 'data', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     const recordCount = db.getRecordCount();
+    // Get local IP for display
+    const os = require('os');
+    const nets = os.networkInterfaces();
+    let localIP = 'your-pc-ip';
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            if (net.family === 'IPv4' && !net.internal) {
+                localIP = net.address;
+                break;
+            }
+        }
+        if (localIP !== 'your-pc-ip') break;
+    }
     console.log('');
     console.log('  ╔══════════════════════════════════════════════╗');
     console.log('  ║   Zone 1 Crime Intelligence System           ║');
     console.log('  ║   झोन 1 गुन्हे गुप्तचर प्रणाली                  ║');
     console.log('  ╠══════════════════════════════════════════════╣');
-    console.log(`  ║   Server:  http://localhost:${PORT}              ║`);
+    console.log(`  ║   Local:   http://10.1.68.130:${PORT}           ║`);
+    console.log(`  ║   Network: http://${localIP}:${PORT}`.padEnd(48) + '║');
     console.log(`  ║   Excel:   ${(EXCEL_PATH ? path.basename(EXCEL_PATH) : 'Not connected').substring(0, 30).padEnd(30)}   ║`);
     console.log(`  ║   Records: ${String(recordCount).padEnd(30)}   ║`);
     console.log('  ║   Database: SQLite (WAL mode)                ║');

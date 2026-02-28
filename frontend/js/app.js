@@ -110,16 +110,18 @@ function handleLogout() {
 }
 
 // ─── Data Fetching (cached in sessionStorage, 30s TTL) ──────
-async function fetchData() {
+async function fetchData(force = false) {
     try {
-        // Check sessionStorage cache (30s TTL)
-        const cached = sessionStorage.getItem('z1cis_data');
-        if (cached) {
-            const { data, ts } = JSON.parse(cached);
-            if (Date.now() - ts < 30000) {
-                allData = data;
-                applyFilters();
-                return allData;
+        if (!force) {
+            // Check sessionStorage cache (30s TTL)
+            const cached = sessionStorage.getItem('z1cis_data');
+            if (cached) {
+                const { data, ts } = JSON.parse(cached);
+                if (Date.now() - ts < 30000) {
+                    allData = data;
+                    applyFilters();
+                    return allData;
+                }
             }
         }
         const res = await fetch('/api/data', { credentials: 'same-origin' });
@@ -148,7 +150,7 @@ function connectSSE() {
             console.log('Data updated! Refreshing...');
             // Dispatch custom event for page-specific handlers (e.g. data.js)
             window.dispatchEvent(new CustomEvent('z1cis-data-updated'));
-            fetchData().then(() => {
+            fetchData(true).then(() => {
                 showToast();
             });
         }

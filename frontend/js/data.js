@@ -339,7 +339,7 @@ function handleDisconnect() {
 // ─── Load Filter Options ─────────────────────────────────────
 async function loadFilterOptions() {
     try {
-        const res = await fetch('/api/data', { credentials: 'same-origin' });
+        const res = await fetch(`/api/data?_t=${Date.now()}`, { credentials: 'same-origin' });
         const data = await res.json();
         const filters = data.filters;
 
@@ -370,7 +370,7 @@ function getMonthName(m) {
 // ─── Load Records (Paginated) ────────────────────────────────
 async function loadRecords() {
     try {
-        const params = new URLSearchParams({ page: currentPage, limit: PAGE_LIMIT });
+        const params = new URLSearchParams({ page: currentPage, limit: PAGE_LIMIT, _t: Date.now() });
         Object.entries(currentFilters).forEach(([k, v]) => { if (v) params.append(k, v); });
 
         const res = await fetch(`/api/records?${params}`, { credentials: 'same-origin' });
